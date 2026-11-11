@@ -1,0 +1,1463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BE STILL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#eee4d4;--dim:#a89c8a;--red:#ff2a36;--blue:#62b0ff;--gold:#d6ad55;--bg:#060508}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#000;overflow:hidden;color:var(--ink);font-family:"IM Fell English",Georgia,"Times New Roman",serif}
+#wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000}
+#game{position:relative;width:960px;height:540px;flex:none;overflow:hidden;background:#000;user-select:none;-webkit-user-select:none;transform-origin:50% 50%}
+#cv{position:absolute;left:0;top:0;width:960px;height:540px}
+.hide{display:none!important}
+button{font-family:inherit;color:inherit;cursor:pointer}
+#spots,#nav{position:absolute;inset:0;pointer-events:none}
+.spot{position:absolute;pointer-events:auto;background:transparent;border:0;padding:0;outline:none;border-radius:8px}
+.spot:hover,.spot:focus-visible{box-shadow:inset 0 0 0 1px rgba(238,228,212,.3);background:radial-gradient(closest-side,rgba(255,240,210,.08),transparent)}
+.spot.cam:hover{box-shadow:inset 0 0 0 1px rgba(170,255,170,.7)}
+.spot::after{content:attr(data-label);position:absolute;left:50%;top:-4px;transform:translate(-50%,-100%);white-space:nowrap;font-size:17px;letter-spacing:.04em;color:var(--ink);background:rgba(6,5,8,.86);padding:3px 10px;border:1px solid rgba(214,173,85,.4);opacity:0;transition:opacity .15s;pointer-events:none}
+.spot.low::after{top:auto;bottom:-4px;transform:translate(-50%,100%)}
+.spot:hover::after,.spot:focus-visible::after{opacity:1}
+.nav{position:absolute;pointer-events:auto;background:rgba(6,5,8,.6);border:1px solid rgba(214,173,85,.32);color:var(--ink);font-size:17px;padding:6px 13px;letter-spacing:.05em;transition:background .15s,border-color .15s}
+.nav:hover{background:rgba(70,16,22,.85);border-color:var(--gold)}
+.nav.left{left:8px;top:246px}.nav.right{right:8px;top:246px}
+.nav.up{left:50%;top:58px;transform:translateX(-50%)}.nav.down{left:50%;bottom:12px;transform:translateX(-50%)}
+.nav.turn{right:8px;bottom:12px}
+#hud{position:absolute;inset:0;pointer-events:none}
+#clock{position:absolute;left:14px;top:10px;font-family:"Special Elite","Courier New",monospace;font-size:24px;text-shadow:0 0 8px #000}
+#clock small{display:block;font-size:13px;color:var(--dim);letter-spacing:.2em}
+#clock.late b{color:var(--red);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.45}}
+#hudr{position:absolute;right:12px;top:10px;display:flex;gap:6px;pointer-events:auto}
+.hb{background:rgba(6,5,8,.65);border:1px solid rgba(214,173,85,.32);font-size:15px;padding:5px 10px;font-family:"Special Elite","Courier New",monospace}
+.hb:hover{border-color:var(--gold)}
+.hb.on{background:#123a16;border-color:#7dff8a;color:#c9ffd0}
+#inv{position:absolute;left:14px;top:62px;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.chip{display:flex;align-items:center;gap:6px;background:rgba(6,5,8,.55);padding:2px 8px 2px 4px;border:1px solid rgba(255,255,255,.08)}
+.chip i{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.6)}
+.chip.placed{opacity:.5}
+#catch{position:absolute;inset:0;cursor:pointer}
+#dlg{position:absolute;left:18px;right:18px;bottom:14px;min-height:126px;display:none;gap:16px;padding:14px 20px 16px;background:linear-gradient(rgba(12,8,13,.93),rgba(5,3,7,.97));border:1px solid rgba(214,173,85,.42);box-shadow:0 0 40px rgba(0,0,0,.8);cursor:pointer}
+#dlg.on{display:flex}
+#dport{width:104px;height:104px;flex:none;border:1px solid rgba(214,173,85,.45);background:#000}
+#dbody{flex:1;min-width:0}
+#dname{font-family:"IM Fell English SC",Georgia,serif;font-size:20px;letter-spacing:.14em;margin-bottom:4px;min-height:4px}
+#dtext{font-size:21px;line-height:1.4;white-space:pre-line}
+#dlg.ready::after{content:"▾";position:absolute;right:14px;bottom:8px;color:var(--gold);animation:pulse 1s infinite}
+#dlg.truth{background:linear-gradient(rgba(36,0,4,.95),rgba(10,0,2,.97));border-color:var(--red);justify-content:center;text-align:center}
+#dlg.truth #dtext{font-family:"Special Elite","Courier New",monospace;font-size:25px;padding-top:24px}
+#dlg.mem{background:linear-gradient(rgba(48,22,34,.95),rgba(24,10,18,.97));border-color:#ffb9cf}
+#dlg.mem #dtext{font-style:italic}
+#dlg.letter{background:linear-gradient(#e9dfc9,#d6c9ad);color:#2a1d16;border-color:#8a6a2a}
+#dlg.letter #dtext{font-style:italic;font-size:22px}
+#dlg.tut{border-color:#7dff8a}
+#dlg.tut #dtext{font-family:"Special Elite","Courier New",monospace;font-size:17px;color:#d6ffd9}
+.tr{color:var(--red);font-family:"Special Elite","Courier New",monospace;text-shadow:0 0 12px rgba(255,30,40,.55);font-style:normal}
+.tb{color:var(--blue);text-shadow:0 0 12px rgba(90,170,255,.5)}
+.ti{font-style:italic}
+#choices{position:absolute;right:36px;bottom:156px;display:flex;flex-direction:column;align-items:stretch;gap:6px;max-width:600px;min-width:300px}
+.choice{background:rgba(8,6,10,.94);border:1px solid rgba(214,173,85,.42);text-align:left;font-size:19px;padding:8px 16px;transition:background .12s}
+.choice:hover:not(:disabled){background:#40101a;border-color:var(--gold)}
+.choice:disabled{opacity:.4;cursor:default}
+.choice.red{color:var(--red);font-family:"Special Elite","Courier New",monospace;font-size:15px}
+.choice.scream{color:#ffd0d0;border-color:var(--red)}
+#qte{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);width:600px;text-align:center;padding:14px 20px;background:rgba(5,0,2,.6);border:1px solid rgba(255,42,54,.45)}
+.qt{font-family:"IM Fell English SC",Georgia,serif;font-size:44px;color:var(--red);letter-spacing:.08em;text-shadow:0 0 18px rgba(255,0,20,.7)}
+#qsub{font-style:italic;color:#f3d3d3;margin-bottom:10px}
+.qbar{height:24px;border:1px solid #ff6a72;background:#1a0306;position:relative}
+#qfill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#7a0612,#ff2a36,#ffd0d0)}
+.qtime{height:5px;background:#2a1a08;margin-top:6px}
+#qtimefill{display:block;height:100%;width:100%;background:var(--gold)}
+.qmic{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;font-family:"Special Elite","Courier New",monospace;font-size:13px;color:#d8c8c8}
+.mini{display:inline-block;width:110px;height:9px;background:#200;border:1px solid #633;position:relative}
+.mini i{position:absolute;left:0;top:0;bottom:0;width:0;background:#ff6a72}
+.mini u{position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff;opacity:.7}
+#qstate{min-width:150px;text-align:left}
+#qstate.good{color:#7dff8a}
+.qbtns{display:flex;gap:8px;justify-content:center;margin-top:10px}
+.qbtns button{background:#2a0508;border:1px solid var(--red);padding:6px 14px;font-size:16px}
+#bigno{position:absolute;left:0;right:0;top:150px;text-align:center;font-family:"IM Fell English SC",Georgia,serif;font-size:190px;color:var(--red);text-shadow:0 0 40px #f00;pointer-events:none;opacity:0}
+#bigno.go{animation:bigno 1.1s ease-out}
+@keyframes bigno{0%{opacity:1;transform:scale(.7)}40%{opacity:1;transform:scale(1.08)}100%{opacity:0;transform:scale(1.3)}}
+#toasts{position:absolute;left:50%;top:14px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+.toast{background:rgba(6,5,8,.9);border:1px solid var(--gold);padding:5px 14px;font-size:16px;transition:opacity .6s}
+.toast.out{opacity:0}
+#card{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px 80px;background:radial-gradient(ellipse at center,#2c0509 0%,#070102 70%)}
+#card.on{display:flex;animation:fadein .8s}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+#card h1{font-family:"IM Fell English SC",Georgia,serif;font-weight:normal;font-size:66px;letter-spacing:.1em;margin:0;color:var(--red);text-shadow:0 0 24px rgba(255,0,20,.5)}
+#card .sub{font-family:"Special Elite","Courier New",monospace;color:var(--dim);letter-spacing:.25em;margin:6px 0 18px;font-size:14px}
+#card p{font-size:20px;line-height:1.45;max-width:700px;margin:6px 0}
+#card .gq{font-family:"Special Elite","Courier New",monospace;color:#ffa24a;font-size:15px;margin-top:16px}
+#card button{margin-top:22px;background:transparent;border:1px solid var(--gold);padding:8px 26px;font-size:19px}
+#card button:hover{background:rgba(214,173,85,.15)}
+#card.night{background:#000}
+#card.night h1{color:var(--ink);text-shadow:none;letter-spacing:.3em}
+#card.ending{background:radial-gradient(ellipse at center,#1d1424 0%,#050307 75%)}
+#card.ending h1{color:var(--gold);text-shadow:0 0 24px rgba(214,173,85,.4)}
+#card.dawn{background:linear-gradient(180deg,#2b1a3a 0%,#8e3d5a 45%,#e9926a 75%,#ffd59a 100%)}
+#card.dawn h1{color:#fff4dc;text-shadow:0 0 30px rgba(255,220,160,.8)}
+#card.dawn .sub,#card.dawn .gq{color:#3a1d2a}
+#card.dawn p{color:#fff8ea;text-shadow:0 1px 6px rgba(60,20,40,.6)}
+.panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:620px;max-height:500px;overflow:auto;background:linear-gradient(#120c10,#070508);border:1px solid var(--gold);padding:20px 26px;box-shadow:0 0 60px #000}
+.panel h2{font-family:"IM Fell English SC",Georgia,serif;font-weight:normal;margin:0 0 8px;letter-spacing:.1em;color:var(--gold)}
+.panel p{margin:6px 0;font-size:17px;line-height:1.4}
+.panel button,.panel select{background:#1a0e12;border:1px solid rgba(214,173,85,.5);padding:5px 12px;font-size:16px;color:var(--ink);font-family:inherit}
+.panel label{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:16px}
+.meter{display:flex;align-items:center;gap:10px;margin:8px 0;font-family:"Special Elite","Courier New",monospace;font-size:14px}
+.meter label{width:60px;margin:0}
+.meter b{flex:1;height:14px;background:#200;border:1px solid #633;position:relative}
+.meter b i{position:absolute;left:0;top:0;bottom:0;width:0;background:#ff6a72}
+.meter b u{position:absolute;top:-4px;bottom:-4px;width:2px;background:#fff}
+#mgood{font-family:"Special Elite","Courier New",monospace;height:22px;color:var(--dim)}
+#mgood.good{color:#7dff8a}
+.jtabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.jtabs button.on{border-color:var(--gold);background:#3a1c12}
+.jitem{border-left:2px solid rgba(214,173,85,.4);padding:4px 12px;margin:8px 0;font-size:17px;line-height:1.4}
+.jitem b{font-family:"IM Fell English SC",Georgia,serif;font-weight:normal;letter-spacing:.06em}
+.jitem.red{border-color:var(--red)}
+.jitem.lock{opacity:.45}
+#title{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#title h1{font-family:"IM Fell English SC",Georgia,serif;font-weight:normal;font-size:112px;letter-spacing:.26em;margin:0 0 0 .26em;color:#efe3cf;text-shadow:0 0 30px rgba(200,20,40,.6),0 4px 0 #3a0508}
+.tsub{font-style:italic;font-size:25px;color:#e7c9c0;margin-top:-6px}
+.tmenu{display:flex;flex-direction:column;gap:8px;margin-top:30px;min-width:260px}
+.tmenu button{background:rgba(10,4,6,.7);border:1px solid rgba(214,173,85,.45);padding:8px 20px;font-size:21px;letter-spacing:.05em}
+.tmenu button:hover{background:#3a0e14;border-color:var(--gold)}
+.tnote{position:absolute;bottom:14px;left:0;right:0;text-align:center;font-size:14px;color:var(--dim);line-height:1.45}
+#namebox{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;gap:16px}
+#namebox p{font-size:26px;font-style:italic;margin:0}
+#namebox input{background:#e9dfc9;color:#2a1d16;border:0;font-family:"IM Fell English",Georgia,serif;font-style:italic;font-size:30px;padding:8px 16px;width:340px;text-align:center;outline:none}
+#namebox button{background:transparent;border:1px solid var(--gold);padding:7px 30px;font-size:20px}
+#namebox small{color:var(--dim);font-size:15px}
+</style>
+</head>
+<body>
+<div id="wrap"><div id="game">
+  <canvas id="cv" width="960" height="540"></canvas>
+  <div id="spots"></div>
+  <div id="nav"></div>
+  <div id="hud" class="hide">
+    <div id="clock"><b id="ctime">3:33</b> AM<small id="cnight">NIGHT 1</small></div>
+    <div id="hudr">
+      <button id="bcam" class="hb hide" title="Camcorder (C)">◉ CAM <span id="cbat">60%</span></button>
+      <button id="bjour" class="hb" title="Journal (J)">JOURNAL</button>
+      <button id="bmute" class="hb" title="Mute (M)">♪</button>
+    </div>
+    <div id="inv"></div>
+  </div>
+  <div id="catch" class="hide"></div>
+  <div id="dlg"><canvas id="dport" width="104" height="104"></canvas><div id="dbody"><div id="dname"></div><div id="dtext"></div></div></div>
+  <div id="choices" class="hide"></div>
+  <div id="qte" class="hide">
+    <div class="qt" id="qtitle">SCREAM “NOOOO”</div>
+    <div id="qsub">Long. Loud. Like the O never ends.</div>
+    <div class="qbar"><div id="qfill"></div></div>
+    <div class="qtime"><i id="qtimefill"></i></div>
+    <div class="qmic">VOICE <span class="mini"><i id="qvol"></i><u id="qthr"></u></span> TONE <span class="mini"><i id="qoo"></i></span> <span id="qstate">mic off</span></div>
+    <div class="qbtns"><button id="qtap">mash N · or tap here</button><button id="qmic">Enable microphone</button></div>
+  </div>
+  <div id="bigno">NO.</div>
+  <div id="title">
+    <h1>BE STILL</h1>
+    <div class="tsub">a love story in oils</div>
+    <div class="tmenu">
+      <button id="tnew">New night</button>
+      <button id="tcont" class="hide">Continue</button>
+      <button id="tmic">Microphone &amp; sound</button>
+      <button id="tgal">Deaths &amp; endings</button>
+    </div>
+    <div class="tnote">Play with headphones and a microphone.<br>Contains death, grief, blood-like paint, jump scares and flashing images.</div>
+  </div>
+  <div id="namebox" class="hide">
+    <p>Sign the back of the canvas.</p>
+    <input id="nameinp" maxlength="14" placeholder="Love" autocomplete="off" spellcheck="false">
+    <button id="nameok">Sign</button>
+    <small>Wren will call you this. Leave it empty and Wren will just call you love.</small>
+  </div>
+  <div id="micpanel" class="panel hide">
+    <h2>Microphone &amp; sound</h2>
+    <p>At certain moments the game listens to your voice. Use the test below to check that your microphone hears you, and raise the sensitivity if it doesn’t.</p>
+    <p><button id="menable">Enable microphone</button> <span id="mstatus">Microphone is off.</span></p>
+    <div class="meter"><label>VOICE</label><b><i id="mvol"></i><u id="mthr"></u></b></div>
+    <div class="meter"><label>TONE</label><b><i id="moo"></i></b></div>
+    <div id="mgood">…</div>
+    <label>Sensitivity <select id="msens"><option value="0">Low: you must really shout</option><option value="1">Normal</option><option value="2">High: weak mic or thin walls</option></select></label>
+    <label>Volume <input id="mvolume" type="range" min="0" max="1" step="0.05"></label>
+    <p><button id="mtest">Test your mic</button> <button id="mclose">Close</button></p>
+  </div>
+  <div id="journal" class="panel hide">
+    <div class="jtabs" id="jtabs"></div>
+    <div id="jbody"></div>
+    <p><button id="jclose">Close</button></p>
+  </div>
+  <div id="card"></div>
+  <div id="toasts"></div>
+</div></div>
+<script>
+'use strict';
+// ================= basics =================
+const Q=new URLSearchParams(location.search);
+const FAST=Q.has('fast'), AUTO=Q.has('auto'), MUTE=Q.has('mute');
+const $=s=>document.querySelector(s);
+const W=960,H=540;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v, lerp=(a,b,t)=>a+(b-a)*t;
+const rnd=(a=1,b)=>b===undefined?Math.random()*a:a+Math.random()*(b-a);
+const sleep=ms=>new Promise(r=>setTimeout(r,FAST?Math.min(ms,5):ms));
+const pad=n=>String(n).padStart(2,'0');
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+class Abort extends Error{}
+let META=store.get('bestill.meta',{deaths:{},endings:{}});
+const saveMeta=()=>store.set('bestill.meta',META);
+
+// ================= story data =================
+const PIG={
+  crimson:{name:'Crimson',col:'#c0142f',mem:'m1'},
+  ultra:{name:'Ultramarine',col:'#2a45d8',mem:'m2'},
+  ochre:{name:'Ochre',col:'#d89a2a',mem:'m3'},
+  bone:{name:'Bone White',col:'#f1e8d4',mem:'m4'}
+};
+const PIG_ORDER=['crimson','ultra','ochre','bone'];
+const MEM={
+  m1:{title:'The Night We Met',text:"Wren's first exhibition. Nobody came. You came for the free wine. Wren spilled theirs down your white shoes and said, \"There. Now you're part of the show.\"\nYou never washed those shoes."},
+  m2:{title:'The Sea, Once',text:"You took a train to the sea and it rained the entire time. Wren painted the rain instead of the water.\n\"The sea's overrated,\" they said, not looking at the sea at all."},
+  m3:{title:'Kitchen, 3 A.M.',text:"Neither of you could sleep. 88.8 played something slow. You danced in socks on the cold tiles.\nWren stepped on your feet eleven times and apologised twelve."},
+  m4:{title:'The Promise',text:"\"If you go first,\" Wren said, \"I'll paint you back.\"\nYou laughed. You shouldn't have laughed. They meant it with their whole chest."}
+};
+const TRUTH={
+  R1:'THERE IS EXACTLY ONE LIVING PERSON IN FLAT 7B.',
+  R2:'YOU HAVE NOT BREATHED SINCE 3:33.',
+  R3:'WREN HAS NOT LEFT FLAT 7B SINCE THE FUNERAL.',
+  R4:'NOTHING BEYOND THIS WINDOW HAS BEEN PAINTED.'
+};
+const DEATHS={
+  bath:{t:'BATH TIME',x:'The water was warm. It is always warm at 3:33. You lay very still in it, the way you did the first time.',g:"you drowned in paint. that's like, a double drown."},
+  lookback:{t:"DON'T LOOK BACK",x:'You turned around one time too many. She was standing exactly where your back used to be.',g:'you looked back. classic. the hallway hates being watched.'},
+  sightseer:{t:'SIGHTSEER',x:'You looked outside. Outside was not finished yet. It used you to fill in the gaps.',g:"you looked outside with your actual eyes? some things you only look at through a lens. ...that was a hint. i'm generous."},
+  freezer:{t:'FREEZER BURN',x:'There was a face in the ice. Yours. It opened its eyes before you could shut the door, and then you were the one inside.',g:'some things keep. you, apparently.'},
+  overtime:{t:'OVERTIME',x:'The clock reached 4:00. Nothing in Flat 7B is allowed to reach 4:00.',g:'the night has a curfew. move faster. stop reading the mugs.'},
+  housecall:{t:'HOUSE CALL',x:'She asked you to hold the pose. You did not say no loudly enough.',g:'louder. longer. more o. nooooooo. like a sad cow in a tunnel.'},
+  hide:{t:'HIDE AND SEEK',x:'You hid in a box. She collects things in boxes. A frame is just a box for a face.',g:'hiding is just standing still somewhere smaller.'},
+  statue:{t:'GOOD SUBJECT',x:'You stood perfectly still, exactly as she asked. She was so proud of you. She still is.',g:'you did what the scary lady said. 0/10. very obedient. very dead.'}
+};
+const DEATH_ORDER=Object.keys(DEATHS);
+const ENDINGS={
+  dawn:{t:'DAWN, FINALLY',k:'TRUE ENDING',cls:'dawn',lines:[
+    'The scream goes through the canvas, through the flat, through nine nights of 3:33.',
+    'In the hall, the clock clicks. 3:34. Wren laughs the way people laugh at funerals: once, surprised, then all at once.',
+    '"There you are," Wren says to the painting. You are smiling in it. It is a good likeness. It finally has your face.',
+    'In the morning Wren opens the curtains. Outside, the city is painted all the way to the edges.',
+    'They hang you in the kitchen, beside the radio, tuned to 88.8. Some nights they still dance. Nobody steps on anybody’s feet.'],
+    g:"4:00. 4:01. 4:02. huh. new numbers. i don't remember these. ...good."},
+  still:{t:'STILL LIFE',k:'ENDING',cls:'ending',lines:[
+    '"Yes," you say, and it is the easiest word in the world.',
+    'The paint closes over you both like warm water. A hand finds yours inside the frame. Neither of you moves again.',
+    'Years later a gallery hangs you under good lights. The placard says STILL LIFE WITH LOVERS. People call it romantic. People are wrong in a way that almost feels right.'],
+    g:'great. so who feeds me.'},
+  turp:{t:'TURPENTINE',k:'ENDING',cls:'ending',lines:[
+    'You scream NO and tear the canvas with your hands, and the canvas is you, so you come apart too.',
+    'Crimson. Ultramarine. Ochre. Bone. Everything runs.',
+    'In the studio someone sobs for a long time. Then someone sets up a fresh canvas and mixes a colour that looks like your skin.',
+    'It is 3:33. Night 1.'],
+    g:'right word. wrong no.'},
+  unpainted:{t:'UNPAINTED',k:'ENDING',cls:'ending',lines:[
+    'The door opens onto white. No stairs. No street. Just primed canvas and a few pencil lines where a city was meant to go.',
+    'You step out. Your colour stays behind on the doormat. You are a sketch now: light, unfinished, free.',
+    'Behind you, a radio tells an empty flat to stay still. In the studio, someone is still waiting for you to come and find them.'],
+    g:"you left without me. i'm a fish, i couldn't have come anyway. still."},
+  gill:{t:'GILL ASCENDANT',k:'JOKE ENDING',cls:'ending',lines:[
+    'Gill grows. Gill fills the bowl. The bowl gives up. Gill fills the bedroom, the hall, the night.',
+    'The clock stops out of respect. The radio interrupts the broadcast: ALL HAIL GILL.',
+    'Madame Still attempts a portrait. Gill does not hold still. Gill has never held still in Gill’s life.',
+    'There is exactly one living god in Flat 7B.'],
+    g:'i would like to thank the academy. and the food. mostly the food.'}
+};
+const END_ORDER=['dawn','still','turp','unpainted','gill'];
+const WHO={
+  '':{name:'',pitch:0,speed:22},
+  gill:{name:'GILL',col:'#ffa24a',pitch:880,speed:24},
+  wren:{name:'WREN',col:'#ffb9cf',pitch:520,speed:28},
+  still:{name:'MADAME STILL',col:'#d6ad55',pitch:120,speed:38},
+  radio:{name:'RADIO 92.1',col:'#a8e0c8',pitch:300,speed:30},
+  phone:{name:'YOU (LAST NIGHT)',col:'#b8bccc',pitch:420,speed:24},
+  you:{name:'',col:'#eee4d4',pitch:360,speed:24}
+};
+const ROOM_INTRO={
+  hall:"The hallway is longer than you remember. Wren's portraits line both walls, and every one of them is faceless.",
+  bath:'The bathroom smells of iron and linseed oil. The tub is full. Nobody ran it.',
+  kitchen:'The kitchen. Two mugs on the table. The fridge hums a song it only half remembers.',
+  studio:"Wren's studio. Every surface is paint. Somewhere, very softly, a brush is moving. Wren isn't here."
+};
+const GILL_LINES=[
+  "fun fact: when they copy you, it's a coin toss which one wakes up. i'm gill number twelve. the other eleven are in the toilet.",
+  "the radio says don't look outside. the radio also says 'stay still'. the radio is not your friend.",
+  'wren used to talk to me while they painted. now wren only talks to the canvas.',
+  "if the tall lady comes, don't hide. hiding is just standing still somewhere smaller.",
+  "i'd blink twice if i was in danger. i don't have eyelids. think about that.",
+  "you know what's great about being a fish? nothing. nothing is great. feed me.",
+  "the paintings in the hall creep closer when you turn your back. i know because i'm always looking. no eyelids.",
+  'wren cried into my bowl once. salt water. i nearly died. romantic, though.'
+];
+
+// ================= state =================
+function freshP(){return{pig:{},placed:{},truth:{},mem:{},dreams:0,hasCam:false,studioOpen:false,know88:false,freezer:false,seen:{},gillTalk:0,deaths:0,lastDeath:null,portraitSeen:false,tut:false,blueTut:false,mirHint:false}}
+function freshL(){return{food:0,foodTaken:false,fed:0,batt:false,radio:false,phone:false,ringing:false,turns:0,ambush:false,dreamt:false,facing:'A',warned:false}}
+const S={name:'Love',loop:1,min:33,room:'bedroom',view:'title',cam:false,batt:60,P:freshP(),L:freshL(),mode:'title',busy:false,t:0,shake:0};
+function save(){store.set('bestill.save',{name:S.name,loop:S.loop,P:S.P})}
+const allPlaced=()=>PIG_ORDER.every(k=>S.P.placed[k]);
+
+// ================= audio =================
+const Snd={ac:null,vol:+store.get('bestill.vol',0.7),muted:MUTE,mk:null,
+  init(){
+    if(this.ac){this.resume();return}
+    const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+    const a=this.ac=new AC();
+    this.master=a.createGain(); this.master.gain.value=this.muted?0:this.vol; this.master.connect(a.destination);
+    this.bus=a.createGain(); this.bus.connect(this.master);
+    this.amb=a.createGain(); this.amb.gain.value=0; this.amb.connect(this.master);
+    this.mus=a.createGain(); this.mus.gain.value=.55; this.musF=a.createBiquadFilter(); this.musF.type='lowpass'; this.musF.frequency.value=9000; this.mus.connect(this.musF); this.musF.connect(this.master);
+    this.rev=a.createConvolver(); const len=a.sampleRate*2.6|0, ir=a.createBuffer(2,len,a.sampleRate);
+    for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.4)}
+    this.rev.buffer=ir; this.revG=a.createGain(); this.revG.gain.value=.45; this.rev.connect(this.revG); this.revG.connect(this.master);
+    const nb=a.createBuffer(1,a.sampleRate*2,a.sampleRate), nd=nb.getChannelData(0); for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1; this.nbuf=nb;
+    this.dF=a.createBiquadFilter(); this.dF.type='lowpass'; this.dF.frequency.value=240; this.dF.Q.value=5; this.dF.connect(this.amb);
+    const og=a.createGain(); og.gain.value=.2;
+    [55,55.6,82.4].forEach((f,i)=>{const o=a.createOscillator(); o.type=i===2?'triangle':'sawtooth'; o.frequency.value=f; o.connect(og); o.start()});
+    og.connect(this.dF);
+    const lfo=a.createOscillator(); lfo.frequency.value=.07; const lg=a.createGain(); lg.gain.value=110; lfo.connect(lg); lg.connect(this.dF.frequency); lfo.start();
+    const ns=a.createBufferSource(); ns.buffer=nb; ns.loop=true; this.nF=a.createBiquadFilter(); this.nF.type='bandpass'; this.nF.frequency.value=400; this.nF.Q.value=.7;
+    const ng=a.createGain(); ng.gain.value=.1; ns.connect(this.nF); this.nF.connect(ng); ng.connect(this.amb); ns.start();
+    this.amb.gain.setTargetAtTime(.35,a.currentTime,1.5);
+    setInterval(()=>this.tick(),1000);
+  },
+  resume(){if(this.ac&&this.ac.state==='suspended')this.ac.resume()},
+  setMute(m){this.muted=m; if(this.master)this.master.gain.setTargetAtTime(m?0:this.vol,this.ac.currentTime,.05)},
+  setVol(v){this.vol=v; store.set('bestill.vol',v); if(this.master&&!this.muted)this.master.gain.setTargetAtTime(v,this.ac.currentTime,.05)},
+  env(g,t,a,p,d){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(p,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+d)},
+  tone(f,dur,o={}){
+    if(!this.ac)return; const a=this.ac,t=a.currentTime+(o.when||0);
+    const os=a.createOscillator(); os.type=o.type||'sine'; os.frequency.setValueAtTime(f,t); if(o.to)os.frequency.exponentialRampToValueAtTime(o.to,t+dur); if(o.detune)os.detune.value=o.detune;
+    const g=a.createGain(); this.env(g,t,o.a||.005,o.g||.2,dur); os.connect(g); g.connect(o.dest||this.bus); if(o.rev)g.connect(this.rev); os.start(t); os.stop(t+dur+.05);
+  },
+  noise(dur,o={}){
+    if(!this.ac)return; const a=this.ac,t=a.currentTime+(o.when||0);
+    const s=a.createBufferSource(); s.buffer=this.nbuf; const f=a.createBiquadFilter(); f.type=o.type||'lowpass'; f.frequency.setValueAtTime(o.f||1000,t); if(o.to)f.frequency.exponentialRampToValueAtTime(o.to,t+dur); f.Q.value=o.q||1;
+    const g=a.createGain(); this.env(g,t,o.a||.005,o.g||.2,dur); s.connect(f); f.connect(g); g.connect(o.dest||this.bus); if(o.rev)g.connect(this.rev); s.start(t,Math.random()); s.stop(t+dur+.05);
+  },
+  room(r){
+    if(!this.ac)return; const m={bedroom:[230,380],hall:[170,300],bath:[320,900],kitchen:[260,140],studio:[200,650],dream:[700,1600],title:[150,250]}[r]||[220,400];
+    const t=this.ac.currentTime; this.dF.frequency.setTargetAtTime(m[0],t,1); this.nF.frequency.setTargetAtTime(m[1],t,1); this.cur=r;
+  },
+  tick(){
+    if(!this.ac||S.mode!=='play'||S.view==='dream')return; const late=S.min>=55;
+    this.tone(late?2300:1700,.025,{type:'square',g:late?.05:.014});
+    if(this.cur==='bath'&&Math.random()<.5)this.drip();
+    if(this.cur==='kitchen'&&S.L.ringing){[0,.18,.5,.68].forEach(w=>{this.tone(880,.14,{type:'square',g:.04,when:w});this.tone(1110,.14,{type:'square',g:.03,when:w})})}
+    if(Math.random()<.05)this.creak(.4);
+  },
+  drip(){this.tone(rnd(1400,2200),.12,{to:rnd(500,800),g:.07,rev:true})},
+  creak(v=1){this.noise(.7,{type:'bandpass',f:300,to:700,q:12,g:.15*v});this.tone(70,.6,{type:'sawtooth',to:110,g:.035*v})},
+  door(){this.creak(1);this.noise(.25,{f:220,g:.35,when:.42});this.tone(55,.3,{g:.3,when:.42,to:40})},
+  sting(){[110,116.5,164.8,174.6,233].forEach(f=>this.tone(f,1.6,{type:'sawtooth',g:.08,a:.01,detune:rnd(-20,20),rev:true}));this.noise(.6,{type:'highpass',f:2000,g:.22});this.tone(42,1.2,{g:.5,to:30})},
+  jump(){this.sting();this.noise(.35,{f:3800,g:.55,type:'bandpass',q:.5})},
+  truth(){this.tone(220,2.2,{type:'triangle',g:.14,rev:true});this.tone(311,2.2,{type:'triangle',g:.1,rev:true,when:.05});this.tone(55,1.5,{g:.4});this.noise(.1,{f:3000,g:.25})},
+  blip(p){this.tone(p*rnd(.97,1.03),.035,{type:'triangle',g:.03})},
+  heart(){this.tone(62,.14,{to:38,g:.5});this.tone(58,.14,{to:36,g:.38,when:.22})},
+  shatter(){this.noise(.9,{type:'highpass',f:1200,g:.32});for(let i=0;i<6;i++)this.tone(rnd(800,3000),.4,{g:.05,when:i*.04,rev:true})},
+  chime(){[880,1320,1760].forEach((f,i)=>this.tone(f,1.2,{g:.06,when:i*.08,rev:true}))},
+  click(){this.tone(520,.04,{type:'triangle',g:.03})},
+  MEL:[[76,1],[72,1],[69,1],[71,1],[72,1],[74,1],[76,2],[81,1],[79,1],[76,2],[77,1],[74,1],[71,1],[72,1],[74,1],[76,1],[74,2],[71,1],[69,3]],
+  music(kind){
+    this.stopMusic(); if(!this.ac||!kind)return; this.mk=kind; this.mi=0; this.mb=0; this.mt=this.ac.currentTime+.15;
+    this.musF.frequency.setTargetAtTime(kind==='radio'?1400:9000,this.ac.currentTime,.1);
+    this.mTimer=setInterval(()=>this.sched(),80);
+  },
+  stopMusic(){clearInterval(this.mTimer);this.mTimer=null;this.mk=null},
+  sched(){
+    const a=this.ac, k=this.mk; if(!k)return; const beat={radio:.6,rot:.72,title:.66,dream:.5}[k]||.5;
+    while(this.mt<a.currentTime+.4){
+      const [n,b]=this.MEL[this.mi%this.MEL.length]; let f=440*Math.pow(2,(n-69)/12);
+      if(k==='rot')f*=Math.pow(2,(-this.mi*6+rnd(-40,40))/1200);
+      const when=Math.max(0,this.mt-a.currentTime);
+      this.tone(f,1.4,{g:k==='title'?.05:.085,when,rev:true,dest:this.mus}); this.tone(f*2,.5,{g:.02,when,dest:this.mus});
+      if(this.mb%3===0)this.tone(f/4,1.8,{type:'triangle',g:.045,when,dest:this.mus,rev:true});
+      if(k==='radio'&&Math.random()<.5)this.noise(.03,{type:'highpass',f:3000,g:.05,when:when+rnd(.3)});
+      this.mt+=b*beat; this.mb+=b; this.mi++;
+    }
+  }
+};
+
+// ================= microphone =================
+const Mic={on:false,pending:false,floor:-60,sens:+store.get('bestill.sens',1),db:-100,ratio:0,zcr:1,cent:3000,good:false,power:0,thr:-40,
+  async enable(){
+    if(this.on||this.pending)return this.on; this.pending=true;
+    try{
+      Snd.init(); if(!Snd.ac)throw new Error('no audio');
+      const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:false,autoGainControl:false}});
+      const ac=Snd.ac; this.src=ac.createMediaStreamSource(st); this.an=ac.createAnalyser(); this.an.fftSize=2048; this.an.smoothingTimeConstant=.25; this.src.connect(this.an);
+      this.td=new Float32Array(this.an.fftSize); this.fd=new Float32Array(this.an.frequencyBinCount); this.on=true;
+      toast('Microphone on. Stay quiet for a second…'); await this.calibrate(); toast('Microphone ready.');
+    }catch(e){console.warn('mic',e); this.on=false; toast('No microphone found. You can still play with the keyboard.')}
+    this.pending=false; return this.on;
+  },
+  async calibrate(){
+    const v=[], t0=performance.now();
+    while(performance.now()-t0<1100){this.sample();v.push(this.db);await new Promise(r=>setTimeout(r,30))}
+    v.sort((a,b)=>a-b); this.floor=clamp(v[Math.floor(v.length*.6)]??-60,-80,-38);
+  },
+  sample(){
+    if(!this.on)return; const an=this.an, td=this.td, fd=this.fd; an.getFloatTimeDomainData(td);
+    let s=0,zc=0; for(let i=0;i<td.length;i++){const v=td[i];s+=v*v;if(i&&((v>=0)!==(td[i-1]>=0)))zc++}
+    this.db=20*Math.log10(Math.sqrt(s/td.length)+1e-9); this.zcr=zc/td.length;
+    an.getFloatFrequencyData(fd); const hz=Snd.ac.sampleRate/an.fftSize; let lo=0,hi=0,ws=0,tot=0;
+    for(let i=1;i<fd.length;i++){const f=i*hz;if(f<90)continue;if(f>5000)break;const p=Math.pow(10,fd[i]/10);if(f<=1100)lo+=p;else hi+=p;ws+=p*f;tot+=p}
+    this.ratio=lo/(lo+hi+1e-12); this.cent=tot?ws/tot:3000;
+    const SE=[[28,-30],[20,-40],[13,-48]][this.sens]||[20,-40]; this.thr=Math.max(this.floor+SE[0],SE[1]);
+    const loud=this.db>this.thr, oo=this.cent<1700&&this.ratio>.5, voiced=this.zcr<.2;
+    this.good=loud&&oo&&voiced; this.power=clamp((this.db-this.thr)/12,0,1); this.oo=clamp((2300-this.cent)/1500,0,1);
+  }
+};
+
+// ================= drawing helpers =================
+const cv=$('#cv'), cx=cv.getContext('2d');
+const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c};
+function poly(g,p,fill){g.beginPath();g.moveTo(p[0][0],p[0][1]);for(let i=1;i<p.length;i++)g.lineTo(p[i][0],p[i][1]);g.closePath();if(fill){g.fillStyle=fill;g.fill()}}
+function lin(g,x0,y0,x1,y1,st){const r=g.createLinearGradient(x0,y0,x1,y1);st.forEach(s=>r.addColorStop(s[0],s[1]));return r}
+function rad(g,x,y,r0,r1,st){const r=g.createRadialGradient(x,y,r0,x,y,r1);st.forEach(s=>r.addColorStop(s[0],s[1]));return r}
+function ell(g,x,y,rx,ry,fill,rot=0){g.beginPath();g.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),rot,0,Math.PI*2);if(fill){g.fillStyle=fill;g.fill()}}
+function seeded(seed){let s=(seed>>>0)||1;return()=>{s^=s<<13;s>>>=0;s^=s>>17;s^=s<<5;s>>>=0;return s/4294967296}}
+function sw(B,side,d,h){const top=B.y*d,bot=H+(B.y+B.h-H)*d,y=top+(bot-top)*h;return[side==='L'?B.x*d:W-(W-(B.x+B.w))*d,y]}
+function sq(B,side,d0,d1,h0,h1){return[sw(B,side,d0,h0),sw(B,side,d1,h0),sw(B,side,d1,h1),sw(B,side,d0,h1)]}
+function bbox(p){let a=1e9,b=1e9,c=-1e9,d=-1e9;p.forEach(q=>{a=Math.min(a,q[0]);b=Math.min(b,q[1]);c=Math.max(c,q[0]);d=Math.max(d,q[1])});return{x:a,y:b,w:c-a,h:d-b}}
+function inset(p,k){const cx0=p.reduce((s,q)=>s+q[0],0)/p.length,cy0=p.reduce((s,q)=>s+q[1],0)/p.length;return p.map(q=>[lerp(q[0],cx0,k),lerp(q[1],cy0,k)])}
+function centroid(p){return[p.reduce((s,q)=>s+q[0],0)/p.length,p.reduce((s,q)=>s+q[1],0)/p.length]}
+const TEX=(()=>{const c=mk(W,H),g=c.getContext('2d');g.fillStyle='#808080';g.fillRect(0,0,W,H);
+  for(let i=0;i<9000;i++){const x=rnd(W),y=rnd(H),a=Math.sin(x*.011)+Math.cos(y*.013)*1.3+rnd(-.35,.35),l=rnd(5,24);
+    g.strokeStyle=Math.random()<.5?`rgba(255,255,255,${rnd(.04,.13)})`:`rgba(0,0,0,${rnd(.04,.13)})`;g.lineWidth=rnd(1,3.6);g.lineCap='round';
+    g.beginPath();g.moveTo(x,y);g.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);g.stroke()}
+  g.globalAlpha=.06;for(let y=0;y<H;y+=3){g.fillStyle=y%6?'#000':'#fff';g.fillRect(0,y,W,1)}for(let x=0;x<W;x+=3){g.fillStyle=x%6?'#000':'#fff';g.fillRect(x,0,1,H)}
+  return c})();
+const NOISE=(()=>{const c=mk(256,256),g=c.getContext('2d'),d=g.createImageData(256,256);for(let i=0;i<d.data.length;i+=4){const v=Math.random()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255}g.putImageData(d,0,0);return c})();
+const GRAINP=cx.createPattern(NOISE,'repeat');
+const VIG=rad(cx,W/2,H/2,230,640,[[0,'rgba(0,0,0,0)'],[1,'rgba(0,0,0,.78)']]);
+const MOTES=Array.from({length:34},(_,i)=>({x:rnd(W),y:rnd(H),s:rnd(.4,1.6),v:rnd(4,14)}));
+
+function post(g,t,o={}){
+  g.globalCompositeOperation='overlay';g.globalAlpha=o.tex??.55;g.drawImage(TEX,0,0);g.globalAlpha=1;g.globalCompositeOperation='source-over';
+  g.save();g.globalAlpha=.075;g.translate(-rnd(256),-rnd(256));g.fillStyle=GRAINP;g.fillRect(0,0,W+256,H+256);g.restore();
+  g.fillStyle=VIG;g.fillRect(0,0,W,H);
+}
+function motes(g,t){g.fillStyle='rgba(255,236,200,.16)';MOTES.forEach(m=>{const y=(m.y+t*m.v)%H,x=m.x+Math.sin(t*.5+m.y)*12;ell(g,x,y,m.s,m.s)})}
+function shell(g,B,c){
+  poly(g,[[0,0],[W,0],[B.x+B.w,B.y],[B.x,B.y]],c.ceil);
+  poly(g,[[0,H],[B.x,B.y+B.h],[B.x+B.w,B.y+B.h],[W,H]],c.floor);
+  poly(g,[[0,0],[B.x,B.y],[B.x,B.y+B.h],[0,H]],c.left);
+  poly(g,[[W,0],[W,H],[B.x+B.w,B.y+B.h],[B.x+B.w,B.y]],c.right);
+  g.fillStyle=c.back;g.fillRect(B.x,B.y,B.w,B.h);
+  g.strokeStyle='rgba(0,0,0,.5)';g.lineWidth=2;g.beginPath();
+  g.moveTo(0,0);g.lineTo(B.x,B.y);g.moveTo(W,0);g.lineTo(B.x+B.w,B.y);g.moveTo(0,H);g.lineTo(B.x,B.y+B.h);g.moveTo(W,H);g.lineTo(B.x+B.w,B.y+B.h);g.stroke();g.strokeRect(B.x,B.y,B.w,B.h);
+}
+function boards(g,B,col,n=12){g.strokeStyle=col;g.lineWidth=1.5;g.beginPath();for(let i=0;i<=n;i++){g.moveTo(-260+(W+520)*i/n,H);g.lineTo(B.x+B.w*i/n,B.y+B.h)}g.stroke()}
+function stripes(g,B,side,col,n=16){g.strokeStyle=col;g.lineWidth=2;g.beginPath();for(let i=1;i<n;i++){const d=Math.pow(i/n,.8),a=sw(B,side,d,0),b=sw(B,side,d,1);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1])}g.stroke()}
+function applyLight(g,L,t){
+  const fl=1+(Math.random()<.025?-.3:0)+Math.sin(t*9)*.015;
+  g.fillStyle=rad(g,L.x,L.y,20,L.r*fl,[[0,'rgba(0,0,0,0)'],[.55,`rgba(0,0,0,${L.dark*.5})`],[1,`rgba(0,0,0,${L.dark})`]]);g.fillRect(0,0,W,H);
+  g.globalCompositeOperation='lighter';g.fillStyle=rad(g,L.x,L.y,0,L.gr||170,[[0,L.glow+(.2*fl)+')'],[1,L.glow+'0)']]);g.fillRect(0,0,W,H);g.globalCompositeOperation='source-over';
+}
+function camFX(g,t){
+  g.globalCompositeOperation='color';g.fillStyle='#3cff5c';g.fillRect(0,0,W,H);
+  g.globalCompositeOperation='screen';g.fillStyle='rgb(16,62,22)';g.fillRect(0,0,W,H);
+  g.globalCompositeOperation='source-over';
+  g.fillStyle='rgba(0,0,0,.2)';for(let y=0;y<H;y+=3)g.fillRect(0,y,W,1);
+  const ry=(t*90)%(H+80)-40;g.fillStyle='rgba(190,255,190,.06)';g.fillRect(0,ry,W,40);
+  g.strokeStyle='rgba(220,255,220,.75)';g.lineWidth=2;const m=34,l=34;
+  [[m,m,1,1],[W-m,m,-1,1],[m,H-m,1,-1],[W-m,H-m,-1,-1]].forEach(([x,y,a,b])=>{g.beginPath();g.moveTo(x,y+b*l);g.lineTo(x,y);g.lineTo(x+a*l,y);g.stroke()});
+  g.font='17px "Special Elite", monospace';g.fillStyle='rgba(230,255,230,.9)';
+  if(Math.floor(t*2)%2)ell(g,W/2-46,44,7,7,'#ff3030');g.fillStyle='rgba(230,255,230,.9)';g.fillText('REC',W/2-32,50);
+  g.fillText(`03:${pad(Math.min(S.min,59))}:${pad(Math.floor(t)%60)} AM`,W-230,H-44);
+  g.fillText('NIGHT VISION',52,H-44);
+}
+
+// ---------- characters ----------
+function drawGill(g,x,y,s,t){
+  g.save();g.translate(x+Math.sin(t*.8)*8*s,y+Math.sin(t*2.1)*3*s);g.scale(Math.cos(t*.8)>0?s:-s,s);
+  const wag=Math.sin(t*7)*.35;g.fillStyle='#ff7b22';
+  g.save();g.translate(-13,0);g.rotate(wag);g.beginPath();g.moveTo(0,0);g.quadraticCurveTo(-10,-14,-17,-12);g.quadraticCurveTo(-10,0,-17,12);g.quadraticCurveTo(-10,14,0,0);g.fill();g.restore();
+  g.beginPath();g.moveTo(-6,-8);g.quadraticCurveTo(0,-19,8,-8);g.fill();
+  ell(g,0,0,15,10,'#ff9a3c');ell(g,2,3,10,5,'rgba(255,225,170,.55)');
+  ell(g,8,-2,3.8,3.8,'#fff');ell(g,9,-2,1.9,1.9,'#111');
+  g.strokeStyle='#a63c00';g.lineWidth=1.2;g.beginPath();g.arc(13,3,2.4,.4,2.4);g.stroke();
+  g.restore();
+}
+function drawBowl(g,x,y,r,t){
+  ell(g,x,y,r,r*.92,rad(g,x-r*.3,y-r*.3,2,r*1.1,[[0,'rgba(170,215,230,.5)'],[1,'rgba(40,80,110,.55)']]));
+  const r2=seeded(5);for(let i=0;i<26;i++){const a=r2()*Math.PI,d=r2()*r*.8;ell(g,x+Math.cos(a)*d*(r2()<.5?-1:1),y+r*.62+r2()*r*.18,3,2.2,['#2a45d8','#1d34a8','#4b66f0'][i%3])}
+  g.fillStyle='#6d6a72';g.fillRect(x+r*.2,y+r*.25,14,22);g.fillRect(x+r*.2-3,y+r*.22,20,5);g.fillStyle='#111';g.fillRect(x+r*.2+5,y+r*.38,4,7);
+  drawGill(g,x-r*.15,y-r*.05,.95,t);
+  ell(g,x,y-r*.82,r*.55,r*.12,'rgba(200,230,240,.25)');
+  g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=2;g.beginPath();g.arc(x,y,r*.86,Math.PI*1.1,Math.PI*1.4);g.stroke();
+}
+function drawStillHead(g,x,y,s,t,o={}){
+  g.save();g.translate(x,y);g.scale(s,s);const fw=34,fh=44;
+  g.fillStyle='#020102';g.fillRect(-fw,-fh,fw*2,fh*2);
+  if((t%5)>.12){ell(g,-11,-10,3.2,4.4,'#f2efe6');ell(g,11,-10,3.2,4.4,'#f2efe6')}
+  g.strokeStyle='#b8132e';g.lineWidth=4;g.lineCap='round';g.beginPath();g.moveTo(-17,12);g.quadraticCurveTo(0,30+(o.crack?rnd(-5,5):0),18,7);g.stroke();
+  g.fillStyle='#b8132e';g.fillRect(9,14,2.6,10+Math.sin(t*2)*4);
+  g.strokeStyle='#7a5a1e';g.lineWidth=13;g.strokeRect(-fw-4,-fh-4,fw*2+8,fh*2+8);
+  g.strokeStyle='#d6ad55';g.lineWidth=6;g.strokeRect(-fw-4,-fh-4,fw*2+8,fh*2+8);
+  g.strokeStyle='#f3d98a';g.lineWidth=1.4;g.strokeRect(-fw-9,-fh-9,fw*2+18,fh*2+18);
+  [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([a,b])=>{ell(g,a*(fw+5),b*(fh+5),7.5,7.5,'#d6ad55');ell(g,a*(fw+5),b*(fh+5),3,3,'#7a5a1e')});
+  ell(g,0,-fh-12,9,6,'#d6ad55');
+  const cols=o.cols||['#d6ad55','#060406','#d6ad55'];
+  for(let i=0;i<6;i++){const xx=-fw+6+i*12.5,L=6+((Math.sin(t*1.7+i*1.9)+1)*10);g.fillStyle=cols[i%cols.length];g.fillRect(xx,fh+8,3,L);ell(g,xx+1.5,fh+8+L,2.8,3.4,cols[i%cols.length])}
+  if(o.crack){g.strokeStyle='#f3d98a';g.lineWidth=1.5;g.beginPath();g.moveTo(-fw,-10);g.lineTo(-8,4);g.lineTo(4,-20);g.lineTo(fw,6);g.stroke()}
+  g.restore();
+}
+function drawStill(g,x,y,s,t,o={}){
+  g.save();g.translate(x+(o.crack?rnd(-4,4):0),y);g.scale(s,s);const sw2=Math.sin(t*1.1)*3,ink='#060406';
+  g.fillStyle=ink;g.beginPath();g.moveTo(-72,0);g.bezierCurveTo(-60,-90,-30,-150,-22,-185);g.bezierCurveTo(-30,-230,-48,-262,-42,-274);g.lineTo(-10,-292);g.lineTo(-7,-318);g.lineTo(7,-318);g.lineTo(10,-292);g.lineTo(42,-274);g.bezierCurveTo(48,-262,30,-230,22,-185);g.bezierCurveTo(30,-150,60,-90,72,0);g.closePath();g.fill();
+  const cols=o.cols||[ink];
+  for(let i=-66;i<=66;i+=9){const L=10+(Math.sin(t*1.3+i*.7)+1)*14+Math.abs(i)%7;const dc=cols[((i+66)/9|0)%cols.length];g.fillStyle=dc;g.fillRect(i-2,-2,4,L);ell(g,i,L,3.2,4,dc)}
+  g.strokeStyle=ink;g.lineWidth=7;g.lineCap='round';g.beginPath();g.moveTo(-38,-268);g.quadraticCurveTo(-62+sw2,-160,-52+sw2,-60);g.moveTo(38,-268);g.quadraticCurveTo(62-sw2,-160,52-sw2,-60);g.stroke();
+  g.lineWidth=2.5;for(let f=-2;f<=2;f++){g.beginPath();g.moveTo(-52+sw2,-60);g.lineTo(-52+sw2+f*3.2,-28+Math.abs(f)*4);g.moveTo(52-sw2,-60);g.lineTo(52-sw2+f*3.2,-28+Math.abs(f)*4);g.stroke()}
+  drawStillHead(g,sw2*.6,-362,1,t,o);
+  g.restore();
+}
+function drawWren(g,x,y,s,t,o={}){
+  g.save();g.translate(x,y);g.scale(s,s);const b=Math.sin(t*1.7)*1.4,HAIR='#3a2620';
+  g.fillStyle='#f3ead8';g.beginPath();g.moveTo(-80,150);g.bezierCurveTo(-78,70+b,-52,52+b,-26,46);g.lineTo(26,46);g.bezierCurveTo(52,52+b,78,70+b,80,150);g.closePath();g.fill();
+  g.fillStyle='#55789a';g.beginPath();g.moveTo(-52,150);g.lineTo(-44,88+b);g.lineTo(44,88+b);g.lineTo(52,150);g.fill();
+  g.strokeStyle='#55789a';g.lineWidth=9;g.beginPath();g.moveTo(-36,92);g.lineTo(-30,52);g.moveTo(36,92);g.lineTo(30,52);g.stroke();
+  [['#c0142f',-20,112],['#d89a2a',14,124],['#3fb6a8',28,104],['#2a45d8',-6,134]].forEach(([c,a,d])=>ell(g,a,d,4,3,c));
+  if(o.smeared){[['#c0142f',-40,80],['#2a45d8',40,70],['#d89a2a',-10,60],['#f1e8d4',20,96]].forEach(([c,a,d])=>ell(g,a,d,14,8,c,.4))}
+  g.fillStyle='#e9c3a6';g.fillRect(-11,26,22,24);
+  g.fillStyle='#d9a441';ell(g,0,48+b,34,11,'#d9a441');g.fillRect(12,48+b,13,40);
+  ell(g,0,-6,50,52,HAIR);ell(g,-32,18,22,30,HAIR);ell(g,32,18,22,30,HAIR);
+  if(o.back){ell(g,0,-2,52,56,HAIR);g.strokeStyle='#3fb6a8';g.lineWidth=5;g.beginPath();g.moveTo(-10,-50);g.quadraticCurveTo(-20,-10,-14,30);g.stroke();g.restore();return}
+  if(o.frame){g.restore();drawStillHead(g,x,y,s*.9,t,{});return}
+  ell(g,0,0,38,42,'#f3cfb3');
+  g.fillStyle=HAIR;g.beginPath();g.moveTo(-41,-4);g.bezierCurveTo(-37,-52,30,-60,42,-2);g.bezierCurveTo(30,-26,10,-31,-2,-20);g.bezierCurveTo(-14,-31,-30,-22,-41,-4);g.fill();
+  g.strokeStyle='#3fb6a8';g.lineWidth=5;g.beginPath();g.moveTo(14,-46);g.quadraticCurveTo(27,-30,31,-12);g.stroke();
+  ell(g,-20,13,8,5,'rgba(255,110,135,.45)');ell(g,20,13,8,5,'rgba(255,110,135,.45)');
+  g.strokeStyle='#2a1a16';g.lineWidth=2.6;g.lineCap='round';const blink=(t%4.3)<.13;
+  if(o.mood==='sad'){
+    g.beginPath();g.moveTo(-22,-8);g.lineTo(-8,-14);g.moveTo(22,-8);g.lineTo(8,-14);g.stroke();
+    if(blink){g.beginPath();g.moveTo(-18,0);g.lineTo(-10,0);g.moveTo(10,0);g.lineTo(18,0);g.stroke()}else{ell(g,-14,0,3.5,4.2,'#2a1a16');ell(g,14,0,3.5,4.2,'#2a1a16')}
+    ell(g,15,10+((t*12)%14),2.2,3.2,'rgba(160,210,255,.85)');
+    g.beginPath();g.moveTo(-7,20);g.quadraticCurveTo(0,17,7,20);g.stroke();
+  }else if(o.mood==='open'){
+    if(blink){g.beginPath();g.moveTo(-18,0);g.lineTo(-10,0);g.moveTo(10,0);g.lineTo(18,0);g.stroke()}else{ell(g,-14,0,3.5,4.4,'#2a1a16');ell(g,14,0,3.5,4.4,'#2a1a16')}
+    g.beginPath();g.arc(0,14,7,.15*Math.PI,.85*Math.PI);g.stroke();
+  }else{
+    g.beginPath();g.arc(-14,3,6,Math.PI*1.1,Math.PI*1.9);g.stroke();g.beginPath();g.arc(14,3,6,Math.PI*1.1,Math.PI*1.9);g.stroke();
+    g.beginPath();g.arc(0,14,8,.15*Math.PI,.85*Math.PI);g.stroke();
+  }
+  ell(g,25,22,5,3,'rgba(42,69,216,.6)');
+  g.restore();
+}
+function drawPortraitCanvas(g,x,y,w,h,t){
+  g.fillStyle='#e9e1cf';g.fillRect(x-5,y-5,w+10,h+10);
+  g.fillStyle=lin(g,x,y,x,y+h,[[0,'#33402f'],[1,'#1a2118']]);g.fillRect(x,y,w,h);
+  const c0=x+w/2,c1=y+h*.38;
+  g.fillStyle='#2b3050';g.beginPath();g.moveTo(x+w*.1,y+h);g.quadraticCurveTo(x+w*.14,y+h*.64,c0,y+h*.6);g.quadraticCurveTo(x+w*.86,y+h*.64,x+w*.9,y+h);g.fill();
+  g.fillStyle='#c9a98a';g.fillRect(c0-12,c1+32,24,30);
+  ell(g,c0,c1-6,46,54,'#2a1d16');
+  const fin=S.portraitFinal?clamp((S.t-S.paintAnim)/3,0,1):0;
+  ell(g,c0,c1+4,33,43,fin>0?`rgb(${lerp(217,224,fin)},${lerp(205,180,fin)},${lerp(184,150,fin)})`:'#ddd3c0');
+  if(fin>0){
+    g.globalAlpha=fin;ell(g,c0-12,c1,4.5,5.5,'#2a45d8');ell(g,c0+12,c1,4.5,5.5,'#2a45d8');ell(g,c0-11,c1-1.5,1.4,1.4,'#f1e8d4');ell(g,c0+13,c1-1.5,1.4,1.4,'#f1e8d4');
+    g.strokeStyle='#c0142f';g.lineWidth=3;g.beginPath();g.arc(c0,c1+16,9,.15*Math.PI,.85*Math.PI);g.stroke();
+    ell(g,c0-20,c1+12,7,4,'rgba(216,154,42,.5)');ell(g,c0+20,c1+12,7,4,'rgba(216,154,42,.5)');g.globalAlpha=1;
+  }else{g.strokeStyle='rgba(80,70,60,.4)';g.lineWidth=1;g.beginPath();g.moveTo(c0,c1-38);g.lineTo(c0,c1+44);g.moveTo(c0-30,c1);g.lineTo(c0+30,c1);g.stroke()}
+  g.fillStyle='rgba(240,230,210,.75)';g.font='italic 12px "IM Fell English", serif';g.textAlign='right';g.fillText(S.name,x+w-8,y+h-9);g.textAlign='left';
+}
+
+// ================= rooms =================
+const BB={x:250,y:90,w:460,h:300}, HB={x:400,y:175,w:160,h:190}, BAB={x:270,y:95,w:420,h:290}, KB={x:250,y:100,w:460,h:290}, SB={x:210,y:80,w:540,h:310};
+function drape(g,x,y,w,h,t,side){
+  const s=Math.sin(t*.8+side*2)*2;g.beginPath();g.moveTo(x,y);g.lineTo(x+w,y);g.quadraticCurveTo(x+w+s,y+h*.6,x+w+(side?-4:6)+s,y+h);g.lineTo(x+(side?8:-2)+s,y+h);g.quadraticCurveTo(x+s*.5,y+h*.5,x,y);g.closePath();
+  g.fillStyle=lin(g,x,0,x+w,0,[[0,'#24060a'],[.22,'#5a1019'],[.45,'#24060a'],[.7,'#5a1019'],[1,'#24060a']]);g.fill();
+}
+function sideDoor(g,B,side,d0,d1,col){const p=sq(B,side,d0,d1,.2,1);poly(g,p,col);poly(g,inset(p,.18),'rgba(0,0,0,.25)');const k=sw(B,side,lerp(d0,d1,side==='L'?.85:.15),.62);ell(g,k[0],k[1],3,3,'#c9a24a');g.strokeStyle='rgba(255,200,120,.35)';g.lineWidth=2;g.beginPath();g.moveTo(p[3][0],p[3][1]-1);g.lineTo(p[2][0],p[2][1]-1);g.stroke();return p}
+function hallPaintings(){
+  const f=S.L.facing,c=Math.min(S.L.turns,4)*.035;
+  const L=f==='A'?[[.5,.6],[.67,.75],[.81,.87]]:[[.55,.64],[.72,.8]], R=f==='A'?[[.56,.65],[.72,.8]]:[[.2,.33],[.44,.54],[.62,.7],[.76,.82]];
+  const out=[];L.forEach(([a,b])=>out.push({side:'L',p:sq(HB,'L',a-c,b-c,.22,.5)}));R.forEach(([a,b])=>out.push({side:'R',p:sq(HB,'R',a-c,b-c,.22,.5)}));return out;
+}
+function drawPainting(g,p,i,t){
+  poly(g,p,'#8a6a2a');const q=inset(p,.14);poly(g,q,['#22301f','#2c1f2c','#1f2a36','#33221a','#2a2a1c','#1d2428'][(i+S.loop)%6]);
+  const [x,y]=centroid(q),bb=bbox(q);ell(g,x,y+bb.h*.32,bb.w*.38,bb.h*.22,'#2b2a3c');ell(g,x,y-bb.h*.04,bb.w*.2,bb.h*.27,'#d5cab5');
+  if(S.L.turns>=2&&i===1){ell(g,x-bb.w*.07,y-bb.h*.06,1.8,2.2,'#111');ell(g,x+bb.w*.07,y-bb.h*.06,1.8,2.2,'#111')}
+}
+const ROOMS={
+  bedroom:{
+    light:{x:470,y:285,r:560,dark:.74,glow:'rgba(255,165,85,',gr:180},
+    draw(g,t){
+      const B=BB;
+      shell(g,B,{ceil:'#0a0d12',floor:lin(g,0,B.y+B.h,0,H,[[0,'#17110d'],[1,'#2d2119']]),left:lin(g,0,0,B.x,0,[[0,'#0b1017'],[1,'#17222f']]),right:lin(g,W,0,B.x+B.w,0,[[0,'#0b1017'],[1,'#17222f']]),back:lin(g,0,B.y,0,B.y+B.h,[[0,'#1e2c3c'],[1,'#141e2a']])});
+      boards(g,B,'rgba(0,0,0,.35)',14);
+      g.fillStyle='rgba(180,200,230,.05)';for(let x=B.x+18;x<B.x+B.w;x+=34)for(let y=B.y+18;y<B.y+B.h;y+=38){g.beginPath();g.moveTo(x,y-6);g.lineTo(x+5,y);g.lineTo(x,y+6);g.lineTo(x-5,y);g.fill()}
+      g.fillStyle='#262b2f';g.fillRect(274,124,162,182);
+      g.fillStyle=lin(g,0,132,0,298,[[0,'#9ea3a2'],[1,'#c9ccc6']]);g.fillRect(282,132,146,166);
+      for(let i=0;i<3;i++){g.fillStyle='rgba(255,255,255,.12)';ell(g,300+((t*6+i*60)%160),180+i*35,50,14)}
+      g.fillStyle='#1b1d1f';g.fillRect(268,118,174,6);
+      drape(g,268,124,84,186,t,0);drape(g,358,124,84,186,t,1);
+      const wd=sq(B,'L',.03,.31,.07,.97);poly(g,wd,'#21160f');poly(g,inset(wd,.12),'#2b1d14');const wc=centroid(wd);g.strokeStyle='rgba(0,0,0,.6)';g.lineWidth=2;g.beginPath();g.moveTo(wc[0],wd[0][1]+20);g.lineTo(wc[0]+2,wd[3][1]-20);g.stroke();ell(g,wc[0]+6,wc[1],2.5,4,'#a88a4a');ell(g,wc[0]-4,wc[1],2.5,4,'#a88a4a');
+      const dr=sq(B,'L',.42,.8,.6,.93);poly(g,dr,'#2a1b12');poly(g,sq(B,'L',.42,.8,.6,.64),'#3b281b');
+      drawBowl(g,158,258,40,t);
+      sideDoor(g,B,'R',.04,.28,'#2b1c13');
+      g.fillStyle='#2a1c14';g.fillRect(440,318,64,72);g.fillStyle='#3b291d';g.fillRect(436,312,72,9);g.strokeStyle='rgba(0,0,0,.5)';g.strokeRect(446,334,52,22);ell(g,472,345,2.5,2.5,'#a88a4a');
+      g.fillStyle='#16110d';g.fillRect(464,284,5,28);poly(g,[[446,284],[486,284],[477,256],[455,256]],'#c98a4a');
+      poly(g,[[480,306],[502,303],[505,311],[482,313]],'#e8dcc6');
+      g.fillStyle='#24170f';g.fillRect(512,262,196,130);g.fillStyle='#2f1f15';g.fillRect(512,262,196,10);
+      poly(g,[[516,350],[702,350],[876,452],[540,452]],'#c9c2b0');
+      poly(g,[[540,452],[876,452],[876,486],[540,486]],'#8f8779');
+      poly(g,[[702,350],[876,452],[876,486],[702,392]],'#a59d8e');
+      ell(g,566,352,38,13,'#e6e0d2');ell(g,652,352,38,13,'#d9d2c3');
+      poly(g,[[530,378],[700,370],[880,452],[545,458]],lin(g,0,370,0,460,[[0,'#3a0c18'],[1,'#5c1424']]));
+      poly(g,[[545,458],[880,452],[876,488],[540,490]],'#3a0c18');
+      g.strokeStyle='rgba(0,0,0,.35)';g.lineWidth=2;g.beginPath();g.moveTo(600,390);g.quadraticCurveTo(680,420,640,452);g.moveTo(720,400);g.quadraticCurveTo(800,430,780,452);g.stroke();
+      g.fillStyle='#120c09';g.fillRect(548,486,10,24);g.fillRect(860,486,10,24);
+      g.fillStyle='rgba(0,0,0,.7)';g.fillRect(558,488,302,22);
+      motes(g,t);
+    },
+    cam(g,t){
+      g.fillStyle='#f6f4ee';g.fillRect(346,134,18,162);
+      g.strokeStyle='rgba(60,60,60,.6)';g.lineWidth=1;g.beginPath();g.moveTo(346,240);g.lineTo(364,236);g.moveTo(348,200);g.lineTo(362,214);g.stroke();
+      ell(g,700,500,40,7,'rgba(220,210,200,.65)');ell(g,660,500,7,5,'rgba(240,240,240,.8)');
+    },
+    spots(){return[
+      {id:'window',x:274,y:124,w:162,h:182,label:S.cam?'Window (through the camcorder)':'Window',act:actWindow},
+      {id:'letter',x:436,y:290,w:72,h:44,label:'Letter',act:letter},
+      {id:'bed',x:516,y:300,w:300,h:150,label:'Bed',act:actBed},
+      {id:'under',x:560,y:482,w:300,h:32,label:'Under the bed',cam:true,cls:'low',act:actUnder},
+      {id:'gill',x:112,y:212,w:94,h:92,label:'Fishbowl',act:actGill},
+      {id:'wardrobe',x:8,y:40,w:72,h:440,label:'Wardrobe',act:actWardrobe}
+    ]},
+    exits(){return[{dir:'right',label:'Hallway ▶',act:()=>go('hall')}]}
+  },
+  hall:{
+    light:{x:480,y:160,r:500,dark:.78,glow:'rgba(255,190,120,',gr:120},
+    draw(g,t){
+      const B=HB,f=S.L.facing;
+      shell(g,B,{ceil:'#0c0607',floor:lin(g,0,B.y+B.h,0,H,[[0,'#120b08'],[1,'#2b1b12']]),left:lin(g,0,0,B.x,0,[[0,'#2c1013'],[1,'#150709']]),right:lin(g,W,0,B.x+B.w,0,[[0,'#2c1013'],[1,'#150709']]),back:'#1d0b0d'});
+      boards(g,B,'rgba(0,0,0,.4)',10);
+      poly(g,[[320,H],[450,B.y+B.h],[510,B.y+B.h],[640,H]],lin(g,0,B.y+B.h,0,H,[[0,'#2a0a10'],[1,'#5a1620']]));
+      stripes(g,B,'L','rgba(200,120,90,.07)');stripes(g,B,'R','rgba(200,120,90,.07)');
+      g.strokeStyle='rgba(0,0,0,.4)';g.lineWidth=3;[['L'],['R']].forEach(([s])=>{const a=sw(B,s,0,.66),b=sw(B,s,1,.66);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke()});
+      g.strokeStyle='#111';g.lineWidth=1.5;g.beginPath();g.moveTo(480,0);g.lineTo(480,148);g.stroke();ell(g,480,154,7,9,'#ffe9b0');
+      if(f==='A'){
+        g.fillStyle='#2e1c12';g.fillRect(434,206,92,159);g.fillStyle='#3a2418';g.fillRect(440,212,80,153);g.strokeStyle='rgba(0,0,0,.4)';g.strokeRect(448,222,64,56);g.strokeRect(448,290,64,64);
+        ell(g,510,300,3,3,'#c9a24a');ell(g,510,309,4,2.4,'#ff8a2a');
+        sideDoor(g,B,'L',.14,.42,'#2a1a12');sideDoor(g,B,'R',.18,.46,'#2a1a12');
+        g.fillStyle='#1d120c';g.fillRect(878,440,8,70);g.fillRect(942,440,8,70);ell(g,912,438,50,13,'#3a281c');
+        if(!S.P.hasCam){g.fillStyle='#151515';g.fillRect(890,414,46,22);ell(g,890,425,10,10,'#222');ell(g,890,425,6,6,'#3a5a8a');ell(g,928,418,2,2,'#ff3030')}
+      }else{
+        g.fillStyle='#2a1a12';g.fillRect(432,200,96,165);g.fillStyle='#352218';g.fillRect(438,206,84,159);
+        for(let i=0;i<6;i++)ell(g,512,222+i*22,3.5,3.5,'#c9a24a');
+        g.strokeStyle='#9a9a9a';g.lineWidth=2.5;for(let i=0;i<3;i++){g.beginPath();g.moveTo(444,240+i*36);g.quadraticCurveTo(478,262+i*36,512,236+i*36);g.stroke()}
+        poly(g,[[452,300],[490,298],[491,322],[453,324]],'#e8dcc6');g.fillStyle='#3a1a1a';g.font='7px "Special Elite", monospace';g.fillText('NOT AT 3:33',455,313);
+        sideDoor(g,B,'L',.16,.44,'#2a1a12');
+      }
+      hallPaintings().forEach((P,i)=>drawPainting(g,P.p,i,t));
+      motes(g,t);
+    },
+    cam(g,t){
+      g.save();g.translate(764,128);g.rotate(.05);g.font='30px "Special Elite", monospace';g.fillStyle='rgba(245,255,245,.85)';g.fillText('SHE STOPS',0,0);g.fillText('AT NO',20,36);g.restore();
+      g.font='9px "Special Elite", monospace';g.fillStyle='rgba(245,255,245,.95)';g.textAlign='center';
+      hallPaintings().forEach((P,i)=>{if(i<S.loop){const b=bbox(P.p);g.fillText(`${S.name.toUpperCase()} #${i+1}`,b.x+b.w/2,b.y+b.h+12)}});g.textAlign='left';
+    },
+    spots(){
+      const ps=hallPaintings(),Lp=ps.filter(p=>p.side==='L').flatMap(p=>p.p),Rp=ps.filter(p=>p.side==='R').flatMap(p=>p.p),out=[];
+      if(Lp.length)out.push({id:'paintL',...bbox(Lp),label:'Portraits',act:actPaintings});
+      if(Rp.length)out.push({id:'paintR',...bbox(Rp),label:'Portraits',act:actPaintings});
+      if(S.L.facing==='A'){if(!S.P.hasCam)out.push({id:'camcorder',x:862,y:396,w:96,h:60,label:'Camcorder',act:actCamcorder});out.push({id:'writing',x:752,y:92,w:200,h:90,label:'Scratches in the wallpaper',cam:true,act:actWriting})}
+      else out.push({id:'front',x:430,y:198,w:100,h:170,label:'Front door',act:actFront});
+      return out;
+    },
+    exits(){return S.L.facing==='A'?[
+      {dir:'left',label:'◀ Bathroom',act:()=>go('bath')},{dir:'right',label:'Kitchen ▶',act:()=>go('kitchen')},
+      {dir:'up',label:'▲ Studio',act:studioDoor},{dir:'down',label:'▼ Bedroom',act:()=>go('bedroom')},{dir:'turn',label:'↻ Turn around',act:turnAround}
+    ]:[{dir:'left',label:'◀ Bedroom',act:()=>go('bedroom')},{dir:'turn',label:'↻ Turn around',act:turnAround}]}
+  },
+  bath:{
+    light:{x:480,y:60,r:560,dark:.7,glow:'rgba(200,235,220,',gr:150},
+    draw(g,t){
+      const B=BAB;
+      shell(g,B,{ceil:'#0d1312',floor:lin(g,0,B.y+B.h,0,H,[[0,'#1c2422'],[1,'#2c3633']]),left:lin(g,0,0,B.x,0,[[0,'#121a18'],[1,'#1e2926']]),right:lin(g,W,0,B.x+B.w,0,[[0,'#121a18'],[1,'#1e2926']]),back:lin(g,0,B.y,0,B.y+B.h,[[0,'#2f3d38'],[1,'#202b27']])});
+      g.strokeStyle='rgba(0,0,0,.22)';g.lineWidth=1;g.beginPath();for(let x=B.x;x<=B.x+B.w;x+=28){g.moveTo(x,B.y);g.lineTo(x,B.y+B.h)}for(let y=B.y;y<=B.y+B.h;y+=28){g.moveTo(B.x,y);g.lineTo(B.x+B.w,y)}g.stroke();
+      stripes(g,B,'L','rgba(0,0,0,.2)',14);stripes(g,B,'R','rgba(0,0,0,.2)',14);boards(g,B,'rgba(0,0,0,.25)',16);
+      g.fillStyle='#8f8a7a';g.fillRect(288,136,94,118);g.fillStyle=lin(g,0,140,0,250,[[0,'#56625e'],[1,'#20282a']]);g.fillRect(294,142,82,106);
+      const lag=Math.sin(t-.6)*2;ell(g,335+lag,194,15,18,'#0b0e0e');poly(g,[[306+lag,248],[312+lag,218],[358+lag,218],[364+lag,248]],'#0b0e0e');
+      g.strokeStyle='rgba(255,255,255,.12)';g.lineWidth=3;g.beginPath();g.moveTo(300,150);g.lineTo(330,146);g.stroke();
+      ell(g,335,280,46,12,'#d8d4c8');ell(g,335,278,36,7,'#9a9890');g.fillStyle='#c8c4b8';g.fillRect(326,288,18,96);
+      const cb=sq(B,'R',.3,.55,.16,.46);poly(g,cb,'#3a2a1c');poly(g,inset(cb,.15),'#46331f');
+      poly(g,[[402,338],[690,338],[772,470],[350,470]],lin(g,0,338,0,470,[[0,'#e2ded2'],[1,'#8f8b80']]));
+      poly(g,[[420,344],[672,344],[744,452],[378,452]],lin(g,0,344,0,452,[[0,'#5a0712'],[.5,'#8e0f22'],[1,'#3a030a']]));
+      for(let i=0;i<3;i++){const r=((t*.35+i/3)%1);g.strokeStyle=`rgba(255,120,130,${.25*(1-r)})`;g.lineWidth=1.5;ell(g,560,398,20+r*120,4+r*26);g.stroke()}
+      if(!S.P.pig.crimson&&(t%2)<1.4){ell(g,566,420,4,2,'rgba(255,220,140,.9)');ell(g,566,420,12,1,'rgba(255,220,140,.5)')}
+      [[360,470],[760,470]].forEach(([x,y])=>{ell(g,x+(x<500?12:-12),y+4,10,6,'#6a665c')});
+      g.fillStyle='#a6a39a';g.fillRect(676,318,8,22);g.fillRect(664,318,30,6);
+      const dp=(t*1.4)%1;ell(g,680,344+dp*40,2,3,'rgba(190,20,40,.9)');
+      if(S.handGrab){g.fillStyle='#050304';g.beginPath();g.moveTo(520,440);g.quadraticCurveTo(506,380,512,330);g.lineTo(532,330);g.quadraticCurveTo(538,382,540,440);g.fill();for(let f=0;f<5;f++){g.fillRect(508+f*6,300+Math.abs(f-2)*6,4,34)}g.fillStyle='#8e0f22';g.fillRect(516,350,3,16+Math.sin(t*3)*6)}
+      motes(g,t);
+    },
+    cam(g,t){g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=1.5;g.beginPath();g.moveTo(316,236);g.lineTo(356,236);g.stroke();g.font='10px "Special Elite", monospace';g.fillStyle='rgba(255,255,255,.85)';g.fillText('0 BPM',316,232)},
+    spots(){const cb=bbox(sq(BAB,'R',.3,.55,.16,.46));return[
+      {id:'mirror',x:288,y:136,w:94,h:118,label:S.cam?'Reflection (through the camcorder)':'Mirror',act:actMirror},
+      {id:'tub',x:360,y:338,w:400,h:130,label:'Bathtub',act:actTub},
+      {id:'cabinet',...cb,label:'Cabinet',act:actCabinet}
+    ]},
+    exits(){return[{dir:'down',label:'▼ Hallway',act:()=>go('hall')}]}
+  },
+  kitchen:{
+    light:{x:480,y:150,r:540,dark:.7,glow:'rgba(255,190,110,',gr:170},
+    draw(g,t){
+      const B=KB;
+      shell(g,B,{ceil:'#0d0b07',floor:lin(g,0,B.y+B.h,0,H,[[0,'#18140c'],[1,'#2a2416']]),left:lin(g,0,0,B.x,0,[[0,'#17130b'],[1,'#262013']]),right:lin(g,W,0,B.x+B.w,0,[[0,'#17130b'],[1,'#262013']]),back:lin(g,0,B.y,0,B.y+B.h,[[0,'#3d3322'],[1,'#2a2316']])});
+      boards(g,B,'rgba(0,0,0,.3)',18);
+      g.strokeStyle='rgba(0,0,0,.2)';g.lineWidth=1;g.beginPath();for(let x=356;x<=700;x+=20){g.moveTo(x,232);g.lineTo(x,300)}for(let y=232;y<=300;y+=17){g.moveTo(356,y);g.lineTo(700,y)}g.stroke();
+      g.fillStyle='#bdb49c';g.fillRect(264,128,92,262);g.strokeStyle='rgba(0,0,0,.45)';g.lineWidth=2;g.beginPath();g.moveTo(264,200);g.lineTo(356,200);g.stroke();
+      g.fillStyle='#777';g.fillRect(344,150,4,34);g.fillRect(344,214,4,60);
+      poly(g,[[284,236],[330,234],[332,286],[286,288]],'#f3ece0');g.strokeStyle='#333';g.lineWidth=1.3;g.beginPath();
+      [[296,262],[316,262]].forEach(([x,y])=>{g.moveTo(x+3,y-12);g.arc(x,y-12,3,0,7);g.moveTo(x,y-9);g.lineTo(x,y+6);g.moveTo(x-5,y-3);g.lineTo(x+5,y-3);g.moveTo(x,y+6);g.lineTo(x-4,y+14);g.moveTo(x,y+6);g.lineTo(x+4,y+14)});g.stroke();ell(g,306,280,5,3,'#ff8a2a');
+      ['#c0142f','#2a45d8','#d89a2a'].forEach((c,i)=>ell(g,276+i*28,150+(i%2)*10,4,4,c));
+      g.fillStyle='#2a2014';g.fillRect(356,312,344,78);g.fillStyle='#4a3c28';g.fillRect(352,300,352,12);g.strokeStyle='rgba(0,0,0,.4)';for(let x=356;x<700;x+=86)g.strokeRect(x+4,318,78,66);
+      g.fillStyle='#2e2416';g.fillRect(380,128,140,90);g.strokeStyle='rgba(0,0,0,.45)';g.strokeRect(386,134,62,78);g.strokeRect(452,134,62,78);ell(g,444,190,2.5,2.5,'#a88a4a');ell(g,456,190,2.5,2.5,'#a88a4a');
+      g.fillStyle='#3a2c1c';g.fillRect(540,196,140,6);
+      [['#a83a1a',548],['#7a5a2a',572],['#5a3a1a',596],['#c48a2a',622],['#6a4a2a',650]].forEach(([c,x],i)=>{if(i===3&&S.P.pig.ochre){g.save();g.translate(x+8,192);g.rotate(1.4);g.fillStyle=c;g.fillRect(-8,-14,16,20);g.restore();return}g.fillStyle=c;g.fillRect(x,176,16,20);g.fillStyle='#ddd';g.fillRect(x,172,16,5)});
+      const on=S.radioOn;g.fillStyle='#4a2e18';g.fillRect(562,256,90,44);g.fillStyle='#2a1a0e';for(let i=0;i<6;i++)g.fillRect(568+i*6,262,3,32);ell(g,628,278,12,12,on?'#9affc0':'#c8b48a');g.strokeStyle='#222';g.beginPath();g.moveTo(628,278);g.lineTo(628+Math.cos(on?-.5:-2)*10,278+Math.sin(on?-.5:-2)*10);g.stroke();
+      if(on){g.globalCompositeOperation='lighter';ell(g,628,278,30,30,rad(g,628,278,0,30,[[0,'rgba(120,255,170,.35)'],[1,'rgba(0,0,0,0)']]));g.globalCompositeOperation='source-over'}
+      const ph=sq(B,'R',.38,.5,.3,.52),rg=S.L.ringing?Math.sin(t*60)*2:0;g.save();g.translate(rg,0);poly(g,ph,'#c9bfa4');poly(g,inset(ph,.3),'#8a8068');g.restore();
+      const pb=bbox(ph);g.strokeStyle='#5a5240';g.lineWidth=1.5;g.beginPath();for(let i=0;i<12;i++){g.lineTo(pb.x+pb.w/2+Math.sin(i*1.8)*5,pb.y+pb.h+i*8)}g.stroke();
+      ell(g,480,520,240,50,'#3a281a');ell(g,480,514,232,44,'#4a3422');
+      g.fillStyle='#d9d2c2';g.fillRect(398,470,26,30);ell(g,411,470,13,4,'#6a2a1a');ell(g,411,470,13,4);g.strokeStyle='#b8132e';g.lineWidth=2;g.stroke();
+      g.fillStyle='#8a8578';g.fillRect(540,474,26,30);ell(g,553,474,13,4,'#77725f');
+      g.strokeStyle='rgba(255,255,255,.2)';g.lineWidth=1.5;g.beginPath();for(let i=0;i<20;i++)g.lineTo(411+Math.sin(t*2+i*.5)*4,462-i*2.5);g.stroke();
+      const csw=on?Math.sin(t*2.2)*14:0;g.fillStyle='#24180e';g.fillRect(760+csw,380,12,160);g.fillRect(842+csw,380,12,160);g.fillRect(760+csw,384,94,10);g.fillRect(760+csw,416,94,8);
+      g.strokeStyle='#111';g.lineWidth=1.5;g.beginPath();g.moveTo(480,0);g.lineTo(480+Math.sin(t*.7)*3,110);g.stroke();poly(g,[[454+Math.sin(t*.7)*3,128],[506+Math.sin(t*.7)*3,128],[492,110],[468,110]],'#6a4a20');
+      motes(g,t);
+    },
+    spots(){const pb=bbox(sq(KB,'R',.38,.5,.3,.52));return[
+      {id:'freezer',x:264,y:128,w:92,h:72,label:'Freezer',act:actFreezer},
+      {id:'fridge',x:264,y:202,w:92,h:188,label:'Fridge',act:actFridge},
+      {id:'cupboard',x:380,y:128,w:140,h:90,label:'Cupboard',act:actCupboard},
+      {id:'spice',x:540,y:166,w:140,h:38,label:'Spice shelf',act:actSpice},
+      {id:'radio',x:560,y:250,w:96,h:54,label:'Radio',act:actRadio},
+      {id:'phone',x:pb.x-6,y:pb.y-6,w:pb.w+12,h:pb.h+40,label:S.L.ringing?'Phone (ringing)':'Phone',act:actPhone},
+      {id:'mugs',x:380,y:452,w:200,h:60,label:'Two mugs',act:actMugs}
+    ]},
+    exits(){return[{dir:'down',label:'▼ Hallway',act:()=>go('hall')}]}
+  },
+  studio:{
+    light:{x:645,y:195,r:620,dark:.64,glow:'rgba(230,235,255,',gr:200},
+    draw(g,t){
+      const B=SB;
+      shell(g,B,{ceil:'#120d09',floor:lin(g,0,B.y+B.h,0,H,[[0,'#231a13'],[1,'#3a2c20']]),left:lin(g,0,0,B.x,0,[[0,'#140f0b'],[1,'#221911']]),right:lin(g,W,0,B.x+B.w,0,[[0,'#140f0b'],[1,'#221911']]),back:lin(g,0,B.y,0,B.y+B.h,[[0,'#2e231a'],[1,'#1e1711']])});
+      boards(g,B,'rgba(0,0,0,.3)',12);
+      const r=seeded(11);for(let i=0;i<70;i++){const x=r()*W,y=B.y+B.h+r()*(H-B.y-B.h);ell(g,x,y,2+r()*6,1+r()*3,['#c0142f','#2a45d8','#d89a2a','#f1e8d4','#3fb6a8'][i%5]+'99')}
+      for(let i=0;i<30;i++){const x=B.x+r()*B.w,y=B.y+r()*B.h;ell(g,x,y,1+r()*3,1+r()*3,['#c0142f','#2a45d8','#d89a2a','#f1e8d4'][i%4]+'66')}
+      g.fillStyle='#1a140f';g.fillRect(556,106,178,178);g.fillStyle='#efece4';g.fillRect(564,114,162,162);
+      g.strokeStyle='rgba(0,0,0,.06)';g.lineWidth=6;for(let i=0;i<9;i++){g.beginPath();g.moveTo(566,124+i*18);g.lineTo(724,120+i*18+Math.sin(i)*4);g.stroke()}
+      g.fillStyle='#1a140f';g.fillRect(642,114,6,162);g.fillRect(564,192,162,6);
+      for(let i=0;i<5;i++){const x=40+i*34,y=290+i*8;poly(g,[[x,y],[x+120,y-14],[x+132,486-i*4],[x-8,496-i*4]],i%2?'#d8cfbb':'#5a4430');if(i%2){const c=centroid([[x,y],[x+120,y-14],[x+132,486],[x-8,496]]);ell(g,c[0],c[1]-20,22,28,'#cfc3ab');g.strokeStyle='rgba(120,20,20,.55)';g.lineWidth=3;g.beginPath();g.moveTo(c[0]-20,c[1]-40);g.lineTo(c[0]+18,c[1]);g.moveTo(c[0]+18,c[1]-42);g.lineTo(c[0]-16,c[1]+2);g.stroke()}else{g.strokeStyle='#3a2a1a';g.lineWidth=4;poly(g,inset([[x,y],[x+120,y-14],[x+132,486],[x-8,496]],.12));g.stroke()}}
+      g.fillStyle='#2a1c12';g.fillRect(286,430,30,48);g.fillStyle='#d8cfbb';for(let i=0;i<5;i++)g.fillRect(290+i*5,396+i%2*6,2,40);
+      g.strokeStyle='#3a2616';g.lineWidth=9;g.lineCap='round';g.beginPath();g.moveTo(470,118);g.lineTo(398,482);g.moveTo(470,118);g.lineTo(548,482);g.moveTo(470,130);g.lineTo(476,492);g.stroke();
+      if(S.P.portraitSeen||S.portraitFinal)drawPortraitCanvas(g,380,150,180,230,t);
+      else{poly(g,[[372,142],[568,142],[578,392],[360,392]],'#cfc7b4');g.strokeStyle='rgba(0,0,0,.18)';g.lineWidth=5;for(let i=0;i<5;i++){g.beginPath();g.moveTo(390+i*40,146);g.quadraticCurveTo(380+i*42,270,392+i*40,390);g.stroke()}}
+      g.fillStyle='#3a2616';g.fillRect(372,380,196,10);
+      if(S.wrenHere)drawWren(g,620,300,1.05,t,{mood:'sad',smeared:true});
+      g.strokeStyle='#2a1c12';g.lineWidth=7;g.beginPath();g.moveTo(660,466);g.lineTo(640,540);g.moveTo(720,466);g.lineTo(740,540);g.moveTo(690,470);g.lineTo(690,540);g.stroke();ell(g,690,462,52,12,'#3a2818');
+      ell(g,690,444,74,25,'#8a6440');ell(g,650,452,9,6,'#3a2818');
+      PIG_ORDER.forEach((k,i)=>{const x=[662,690,718,742][i],y=[434,428,430,442][i];ell(g,x,y,8.5,5.5,'#4a3420');if(S.P.placed[k])ell(g,x,y-1,7.5,4.8,PIG[k].col)});
+      motes(g,t);
+    },
+    cam(g,t){
+      if(S.stillIn||S.wrenHere)return;
+      g.save();g.globalAlpha=.85;drawStill(g,470,420,.9,t);g.restore();
+      if(S.P.portraitSeen)drawPortraitCanvas(g,380,150,180,230,t);else poly(g,[[372,142],[568,142],[578,392],[360,392]],'#cfc7b4');
+    },
+    spots(){return[
+      {id:'easel',x:372,y:142,w:206,h:250,label:'Easel',act:actEasel},
+      {id:'palette',x:612,y:416,w:156,h:60,label:'Palette',act:actPalette},
+      {id:'stacks',x:30,y:280,w:200,h:210,label:'Old canvases',act:actStacks},
+      {id:'swindow',x:556,y:106,w:178,h:178,label:'Window',act:actStudioWindow},
+      {id:'behind',x:425,y:40,w:90,h:100,label:'Something behind the easel',cam:true,act:actBehind}
+    ]},
+    exits(){return[{dir:'down',label:'▼ Hallway',act:()=>go('hall')}]}
+  }
+};
+
+// ================= dream =================
+const BLOOMS=(()=>{const r=seeded(7),a=[];for(let i=0;i<26;i++)a.push({x:r()*W,y:r()*H*.7,r:40+r()*150,c:['#ffd6e0','#cdb4db','#bde0fe','#caffbf','#ffe5b4','#a2d2ff'][i%6]});return a})();
+function drawDream(g,t,n){
+  g.fillStyle=lin(g,0,0,0,H,[[0,'#ffdccc'],[.55,'#ead2f0'],[1,'#d6f0e0']]);g.fillRect(0,0,W,H);
+  BLOOMS.forEach((b,i)=>{g.globalAlpha=.4;ell(g,b.x+Math.sin(t*.2+i)*8,b.y,b.r,b.r*.8,rad(g,b.x,b.y,0,b.r,[[0,b.c],[1,'rgba(255,255,255,0)']]))});g.globalAlpha=1;
+  g.fillStyle='#c4e6cc';g.beginPath();g.moveTo(0,330);g.bezierCurveTo(200,280,380,320,520,300);g.bezierCurveTo(700,270,840,310,W,290);g.lineTo(W,H);g.lineTo(0,H);g.fill();
+  ell(g,290,362,250,40,'#a8c4f0');g.strokeStyle='rgba(255,255,255,.55)';g.lineWidth=2;for(let i=0;i<5;i++){const x=150+i*60+Math.sin(t+i)*10;g.beginPath();g.moveTo(x,352+i*4);g.lineTo(x+30,352+i*4);g.stroke()}
+  g.fillStyle='#8a6a5a';g.fillRect(118,170,14,170);[[125,160,60],[90,190,40],[165,185,44],[125,130,40]].forEach(([x,y,r])=>ell(g,x,y,r,r*.8,'rgba(255,180,200,.8)'));
+  const bl=[[330,432],[840,420],[930,540],[240,540]];poly(g,bl,'#f7b8c8');g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=7;g.beginPath();for(let i=1;i<6;i++){const a=i/6;g.moveTo(lerp(330,240,0)+(840-330)*a,lerp(432,420,a));g.lineTo(240+(930-240)*a,540)}g.moveTo(300,470);g.lineTo(870,462);g.moveTo(272,505);g.lineTo(900,500);g.stroke();
+  g.fillStyle='#b8865a';g.fillRect(400,440,70,44);g.strokeStyle='#8a5a3a';g.lineWidth=4;g.beginPath();g.arc(435,442,30,Math.PI,0);g.stroke();ell(g,520,470,26,10,'#f3ece0');ell(g,520,466,14,6,'#e0a060');
+  if(n>=2){g.strokeStyle='#8a6a4a';g.lineWidth=5;g.beginPath();g.moveTo(760,250);g.lineTo(730,430);g.moveTo(760,250);g.lineTo(790,430);g.stroke();g.fillStyle='#fffaf0';g.fillRect(720,250,80,100);g.fillStyle='rgba(200,150,180,.6)';ell(g,760,290,18,22)}
+  if(n===2){g.strokeStyle='#111';g.lineWidth=1.3;g.beginPath();const r=seeded(Math.floor(t*8));for(let i=0;i<40;i++)g.lineTo(890+r()*40-20,230+r()*90);g.stroke()}
+  drawWren(g,610,300,1.25,t,{mood:S.wrenMood||'happy',frame:S.wrenFrame,back:S.wrenBack});
+  if(n===3){
+    const p=clamp((t-S.dreamT0)/12,0,1);g.fillStyle=`rgba(25,0,10,${.25+.4*p})`;g.fillRect(0,0,W,H);
+    const r=seeded(3);g.fillStyle='#0a0306';for(let i=0;i<40;i++){const x=r()*W,L=(60+r()*360)*(p*.8+.2)+Math.sin(t+i)*6;g.fillRect(x,0,2+r()*5,L);ell(g,x+2,L,4,6,'#0a0306')}
+  }
+  post(g,t,{tex:.35});
+}
+function drawTitle(g,t){
+  g.fillStyle=lin(g,0,0,0,H,[[0,'#140508'],[1,'#030203']]);g.fillRect(0,0,W,H);
+  g.save();g.globalAlpha=.3+.05*Math.sin(t);drawStill(g,790,590,1.3,t);g.restore();
+  for(let i=0;i<18;i++){const x=(i*57+13)%W,L=40+((Math.sin(t*.4+i)+1)*.5)*170;g.fillStyle='rgba(120,10,20,.6)';g.fillRect(x,0,3,L);ell(g,x+1.5,L,3,4.5,'rgba(120,10,20,.6)')}
+  post(g,t);
+}
+
+// ================= main draw loop =================
+function draw(t){
+  const g=cx;g.save();
+  if(S.shake>0){g.translate(rnd(-S.shake,S.shake),rnd(-S.shake,S.shake));S.shake*=.88;if(S.shake<.4)S.shake=0}
+  if(S.view==='title')drawTitle(g,t);
+  else if(S.view==='dream')drawDream(g,t,S.dreamStage);
+  else if(S.view==='black'){g.fillStyle='#000';g.fillRect(-20,-20,W+40,H+40)}
+  else{
+    const R=ROOMS[S.view];R.draw(g,t);
+    if(S.stillIn)drawStill(g,S.view==='studio'?300:480,470,S.view==='studio'?.92:1,t,{cols:S.stillCols,crack:S.stillCrack});
+    if(S.cam){R.cam&&R.cam(g,t);camFX(g,t)}else applyLight(g,R.light,t);
+    post(g,t);
+  }
+  if(S.qte&&S.qte.threat){
+    const q=S.qte,p=clamp(q.el/q.time,0,1),s=.85+1.35*p,scr=q.scr;
+    g.fillStyle=`rgba(0,0,0,${.25+.45*p})`;g.fillRect(-20,-20,W+40,H+40);
+    drawStill(g,480+(scr?rnd(-14,14):0),150+362*s+(scr?-30:0),scr?s*.94:s,t,{crack:scr});
+  }
+  if(S.splat){const p=(S.t-S.splat.t0)/1.3;if(p>1)S.splat=null;else{g.globalAlpha=1-p;S.splat.parts.forEach(q=>ell(g,q.x+q.vx*p,q.y+q.vy*p+200*p*p,q.r*(1-p*.4),q.r*(1-p*.4),q.c));g.globalAlpha=1}}
+  if(S.jump){
+    const p=(performance.now()-S.jump.t0)/650;
+    if(p>1)S.jump=null;else{g.globalAlpha=p<.2?1:1-(p-.2)/.8;const k=S.jump.kind;
+      if(k==='still'){g.fillStyle='#000';g.fillRect(-20,-20,W+40,H+40);drawStillHead(g,W/2+rnd(-10,10),H/2+rnd(-10,10),3.4+p,t)}
+      else if(k==='white'){g.fillStyle='#f4f1ea';g.fillRect(-20,-20,W+40,H+40);g.strokeStyle='rgba(60,60,60,.5)';g.lineWidth=1;for(let i=0;i<14;i++){g.beginPath();g.moveTo(rnd(W),rnd(H));g.lineTo(rnd(W),rnd(H));g.stroke()}ell(g,W/2,H/2,150,64,'#fff');g.lineWidth=4;g.strokeStyle='#222';g.stroke();ell(g,W/2,H/2,50,50,'#3a2a1a');ell(g,W/2,H/2,20,20,'#000')}
+      else if(k==='ice'){g.fillStyle='#bfe0ee';g.fillRect(-20,-20,W+40,H+40);ell(g,W/2,H/2,140,180,'#e8e4dc');ell(g,W/2-50,H/2-30,18,22,'#0a1a2a');ell(g,W/2+50,H/2-30,18,22,'#0a1a2a');ell(g,W/2-50,H/2-30,6,6,'#fff');ell(g,W/2+50,H/2-30,6,6,'#fff');g.strokeStyle='#5a1a2a';g.lineWidth=6;g.beginPath();g.arc(W/2,H/2+60,40,.1*Math.PI,.9*Math.PI);g.stroke()}
+      g.globalAlpha=1}
+  }
+  if(S.trans){
+    const p=(performance.now()-S.trans.t0)/(FAST?20:760);
+    if(p>1)S.trans=null;else if(p<.5){g.fillStyle='#000';g.fillRect(-20,-20,W+40,H+40);const o=p/.5;g.fillStyle='rgba(255,200,140,.25)';g.fillRect(W/2-50,H/2-110,100,220);g.fillStyle=`rgba(255,210,150,${.5*o})`;g.fillRect(W/2-50,H/2-110,100*o*.9,220);g.strokeStyle='rgba(214,173,85,.6)';g.lineWidth=3;g.strokeRect(W/2-50,H/2-110,100,220)}
+    else{g.fillStyle=`rgba(0,0,0,${1-(p-.5)/.5})`;g.fillRect(-20,-20,W+40,H+40)}
+  }
+  if(S.flash){const p=(performance.now()-S.flash.t0)/500;if(p>1)S.flash=null;else{g.fillStyle=S.flash.c;g.globalAlpha=1-p;g.fillRect(-20,-20,W+40,H+40);g.globalAlpha=1}}
+  g.restore();
+}
+const pg=$('#dport').getContext('2d');
+function drawPort(t){
+  const w=S.portWho;if(!w||!$('#dlg').classList.contains('on'))return;const g=pg;g.clearRect(0,0,104,104);
+  g.fillStyle=lin(g,0,0,0,104,[[0,'#241a22'],[1,'#0a0608']]);g.fillRect(0,0,104,104);
+  if(w==='gill'){ell(g,52,56,44,40,'rgba(120,180,210,.35)');drawGill(g,52,56,1.7,t)}
+  else if(w==='wren'){g.fillStyle=lin(g,0,0,0,104,[[0,'#ffdccc'],[1,'#ead2f0']]);g.fillRect(0,0,104,104);drawWren(g,52,48,.82,t,S.portOpt||{})}
+  else if(w==='still'){g.fillStyle='#000';g.fillRect(0,0,104,104);drawStillHead(g,52,48,.85,t,{crack:S.stillCrack,cols:S.stillCols})}
+  else if(w==='radio'){g.fillStyle='#4a2e18';g.fillRect(14,30,76,48);g.fillStyle='#2a1a0e';for(let i=0;i<6;i++)g.fillRect(20+i*6,36,3,36);ell(g,72,54,10,10,'#9affc0')}
+  else if(w==='phone'){g.strokeStyle='#b8bccc';g.lineWidth=10;g.lineCap='round';g.beginPath();g.arc(52,52,26,Math.PI*.8,Math.PI*1.7);g.stroke();g.fillStyle='rgba(184,188,204,.2)';for(let i=0;i<20;i++)g.fillRect(rnd(104),rnd(104),2,2)}
+  else if(w==='you'){ell(g,52,40,18,22,'#0a0a0e');poly(g,[[18,104],[26,70],[78,70],[86,104]],'#0a0a0e');g.strokeStyle='rgba(255,255,255,.2)';g.lineWidth=1;g.strokeRect(6,6,92,92)}
+}
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;S.t+=dt;
+  if(S.cam&&S.mode==='play'){S.batt-=dt*1.1;if(S.batt<=0){S.batt=0;S.cam=false;toast('The camcorder dies. Find batteries.');ui()}$('#cbat').textContent=Math.ceil(S.batt)+'%'}
+  if(S.qte)qteUpdate(dt);
+  if(!$('#micpanel').classList.contains('hide'))micPanelUpdate();
+  draw(S.t);drawPort(S.t);
+  requestAnimationFrame(frame);
+}
+
+// ================= UI =================
+const dlg=$('#dlg'),dName=$('#dname'),dText=$('#dtext'),catchEl=$('#catch'),choicesEl=$('#choices');
+let D=null,C=null;
+function toast(m){const e=document.createElement('div');e.className='toast';e.textContent=m;$('#toasts').appendChild(e);setTimeout(()=>e.classList.add('out'),2800);setTimeout(()=>e.remove(),3500)}
+function parse(str){str=str.replace(/\{n\}/g,S.name);const segs=[],re=/\{(\/?)(r|b|i)\}/g;let cls='',lastI=0,m;while((m=re.exec(str))){if(m.index>lastI)segs.push({t:str.slice(lastI,m.index),c:cls});cls=m[1]?'':m[2];lastI=re.lastIndex}if(lastI<str.length)segs.push({t:str.slice(lastI),c:cls});return segs}
+function paintText(segs,n){dText.textContent='';let left=n;for(const s of segs){if(left<=0)break;const sp=document.createElement('span');if(s.c)sp.className='t'+s.c;sp.textContent=s.t.slice(0,left);left-=s.t.length;dText.appendChild(sp)}}
+function say(who,text,o={}){
+  return new Promise(res=>{
+    const w=WHO[who]||WHO[''];
+    dlg.className='on'+(o.cls?' '+o.cls:'');
+    dName.textContent=o.name||(who==='you'?S.name.toUpperCase():w.name)||'';dName.style.color=w.col||'';
+    const showPort=['gill','wren','still','radio','phone','you'].includes(who);$('#dport').classList.toggle('hide',!showPort);S.portWho=showPort?who:null;S.portOpt=o;
+    choicesEl.classList.add('hide');catchEl.classList.remove('hide');
+    const segs=parse(text),total=segs.reduce((a,s)=>a+s.t.length,0);let n=0;
+    const d={done:false,iv:null};
+    d.finish=()=>{clearInterval(d.iv);n=total;paintText(segs,n);d.done=true;dlg.classList.add('ready')};
+    d.adv=()=>{if(D!==d)return;if(!d.done){d.finish();return}D=null;dlg.classList.remove('ready');catchEl.classList.add('hide');Snd.click();res()};
+    D=d;dlg.classList.remove('ready');
+    const speed=FAST||AUTO?0:(w.speed||24);
+    if(!speed)d.finish();else{paintText(segs,0);d.iv=setInterval(()=>{n++;if(n%2===0&&w.pitch)Snd.blip(w.pitch);paintText(segs,n);if(n>=total)d.finish()},speed)}
+    if(AUTO)setTimeout(()=>d.adv(),1);
+  });
+}
+function choose(opts){
+  return new Promise(res=>{
+    catchEl.classList.add('hide');dlg.classList.remove('ready');choicesEl.textContent='';choicesEl.classList.remove('hide');
+    const c={pick(i){const op=opts[i];if(C!==c||op===undefined||(typeof op==='object'&&op.dis))return;C=null;choicesEl.classList.add('hide');Snd.click();res(i)}};C=c;
+    opts.forEach((op,i)=>{const b=document.createElement('button');const t=typeof op==='string'?op:op.t;b.className='choice'+(op.cls?' '+op.cls:'');b.textContent=`${i+1}.  ${t}`;b.disabled=!!op.dis;b.onclick=e=>{e.stopPropagation();c.pick(i)};choicesEl.appendChild(b)});
+    if(AUTO){let pick=BS.queue.length?BS.queue.shift():opts.findIndex(o=>!(typeof o==='object'&&o.dis));setTimeout(()=>c.pick(pick),1)}
+  });
+}
+function endDialog(){dlg.className='';catchEl.classList.add('hide');choicesEl.classList.add('hide');D=null;C=null;S.portWho=null}
+catchEl.addEventListener('click',()=>D&&D.adv());dlg.addEventListener('click',()=>D&&D.adv());
+function card(o){
+  return new Promise(res=>{
+    endDialog();const el=$('#card');el.className='on '+(o.kind||'');el.textContent='';
+    const add=(tag,txt,cls)=>{const e=document.createElement(tag);e.textContent=txt;if(cls)e.className=cls;el.appendChild(e);return e};
+    if(o.sub)add('div',o.sub,'sub');add('h1',o.title);(o.lines||[]).forEach(l=>add('p',l));if(o.foot)add('div',o.foot,'sub');if(o.gill)add('div','GILL: '+o.gill,'gq');
+    const b=add('button',o.btn||'Continue');b.onclick=()=>{el.className='';Snd.click();res()};setTimeout(()=>b.focus(),50);
+    if(AUTO)setTimeout(()=>b.click(),1);
+  });
+}
+function ui(){
+  const play=S.mode==='play';$('#hud').classList.toggle('hide',!play);
+  $('#ctime').textContent=S.min<60?`3:${pad(S.min)}`:'4:00';$('#cnight').textContent='NIGHT '+S.loop;$('#clock').classList.toggle('late',S.min>=55);
+  $('#bcam').classList.toggle('hide',!S.P.hasCam);$('#bcam').classList.toggle('on',S.cam);$('#cbat').textContent=Math.ceil(S.batt)+'%';
+  const inv=$('#inv');inv.textContent='';
+  PIG_ORDER.forEach(k=>{if(!S.P.pig[k])return;const c=document.createElement('div');c.className='chip'+(S.P.placed[k]?' placed':'');const i=document.createElement('i');i.style.background=PIG[k].col;c.appendChild(i);c.appendChild(document.createTextNode(PIG[k].name+(S.P.placed[k]?' ✓':'')));inv.appendChild(c)});
+  if(S.L.food>0){const c=document.createElement('div');c.className='chip';c.textContent=`🐟 fish food ×${S.L.food}`;inv.appendChild(c)}
+  if(S.P.studioOpen){const c=document.createElement('div');c.className='chip';c.textContent='🗝 studio key';inv.appendChild(c)}
+  const sp=$('#spots'),nv=$('#nav');sp.textContent='';nv.textContent='';
+  if(!play||S.busy||S.view!==S.room)return;const R=ROOMS[S.room];
+  R.spots().forEach(s=>{if(s.cam&&!S.cam)return;const b=document.createElement('button');b.className='spot'+(s.cam?' cam':'')+(s.cls?' '+s.cls:'')+(s.y<70?' low':'');Object.assign(b.style,{left:s.x+'px',top:s.y+'px',width:s.w+'px',height:s.h+'px'});b.dataset.label=s.label;b.setAttribute('aria-label',s.label);b.dataset.id=s.id;b.onclick=()=>run(s.act);sp.appendChild(b)});
+  R.exits().forEach(e=>{const b=document.createElement('button');b.className='nav '+e.dir;b.textContent=e.label;b.dataset.dir=e.dir;b.onclick=()=>run(e.act);nv.appendChild(b)});
+}
+async function run(fn){
+  if(S.busy)return false;S.busy=true;ui();
+  try{await fn()}catch(e){if(!(e instanceof Abort))console.error(e)}
+  finally{S.busy=false;endDialog();ui()}
+  return true;
+}
+
+// ================= scream QTE =================
+function scream(o={}){
+  Snd.init();
+  return new Promise(res=>{
+    S.qte={time:o.time||6,el:0,fill:0,res,threat:o.threat!==false,hb:0,scr:false,lastKey:0,paused:false,auto:AUTO&&!BS.failQte};
+    $('#qtitle').textContent=o.title||'SCREAM “NOOOO”';$('#qsub').textContent=o.sub||'Long. Loud. Like the O never ends.';
+    $('#qte').classList.remove('hide');$('#qmic').classList.toggle('hide',Mic.on);$('#qtap').textContent=o.test?'tap here':'mash N · or tap here';S.qte.test=!!o.test;
+    endDialogKeepNothing();
+  });
+}
+function endDialogKeepNothing(){dlg.className='';catchEl.classList.add('hide');choicesEl.classList.add('hide')}
+function qteUpdate(dt){
+  const q=S.qte;if(q.paused)return;q.el+=dt;
+  if(q.auto)q.fill+=dt*2.5;
+  if(Mic.on){Mic.sample();if(Mic.good)q.fill+=dt*(.5+.55*Mic.power);else q.fill-=dt*.16}else q.fill-=dt*.16;
+  q.fill=clamp(q.fill,0,1.05);q.scr=Mic.good||performance.now()-q.lastKey<160;
+  q.hb-=dt;if(q.hb<=0){Snd.heart();q.hb=Math.max(.32,.9-q.el/q.time*.6)}
+  if(q.scr)S.shake=Math.max(S.shake,5);
+  $('#qfill').style.width=(q.fill*100)+'%';$('#qtimefill').style.width=(100-100*q.el/q.time)+'%';
+  const st=$('#qstate');
+  if(Mic.on){$('#qvol').style.width=clamp((Mic.db+75)/70,0,1)*100+'%';$('#qthr').style.left=clamp((Mic.thr+75)/70,0,1)*100+'%';$('#qoo').style.width=(Mic.oo||0)*100+'%';
+    st.textContent=Mic.good?'SCREAMING ✓':Mic.db<Mic.thr?'louder…':Mic.zcr>=.2?'voice, not hiss':'rounder: oooo';st.className=Mic.good?'good':''}
+  else{st.textContent=q.test?'mic off':'mic off · mash N';st.className=''}
+  if(q.fill>=1)endQte(true);else if(q.el>=q.time)endQte(false);
+}
+function endQte(ok){
+  const q=S.qte;S.qte=null;$('#qte').classList.add('hide');
+  if(ok){Snd.shatter();S.shake=16;const cols=['#c0142f','#060406','#d6ad55','#2a45d8','#d89a2a'];S.splat={t0:S.t,parts:Array.from({length:70},()=>{const a=rnd(Math.PI*2),v=rnd(80,520);return{x:480,y:220,vx:Math.cos(a)*v,vy:Math.sin(a)*v,r:rnd(3,16),c:cols[(Math.random()*5)|0]}})};const b=$('#bigno');b.classList.remove('go');void b.offsetWidth;b.classList.add('go')}
+  q.res(ok);
+}
+function mashNo(){if(S.qte){S.qte.fill+=.065;S.qte.lastKey=performance.now()}}
+$('#qtap').onclick=e=>{e.stopPropagation();mashNo()};
+$('#qmic').onclick=async e=>{e.stopPropagation();if(!S.qte)return;S.qte.paused=true;await Mic.enable();if(S.qte){S.qte.paused=false;$('#qmic').classList.toggle('hide',Mic.on)}};
+
+// ================= engine =================
+function resetLoop(){
+  S.min=33;S.room='bedroom';S.view='bedroom';S.L=freshL();S.cam=false;S.batt=60;S.stillIn=false;S.stillCrack=false;S.stillCols=null;S.wrenHere=false;S.portraitFinal=false;S.handGrab=false;S.radioOn=false;S.wrenFrame=false;S.wrenBack=false;S.wrenMood=null;
+  Snd.stopMusic();Snd.room('bedroom');save();ui();
+}
+async function spend(m){S.min+=m;ui();if(S.min>=60){Snd.stopMusic();S.radioOn=false;await say('',"The clock in the hall clears its throat. {r}4:00.{/r}");await die('overtime')}}
+function jump(kind){S.jump={kind,t0:performance.now()};Snd.jump();S.shake=14}
+function flash(c){S.flash={c,t0:performance.now()}}
+async function go(to){
+  Snd.door();S.trans={t0:performance.now()};await sleep(380);
+  S.room=to;S.view=to;if(to==='hall')S.L.facing='A';S.min++;S.cam=S.cam&&S.batt>0;Snd.room(to);ui();
+  await sleep(200);
+  if(S.min>=60){await say('',"The clock in the hall clears its throat. {r}4:00.{/r}");await die('overtime')}
+  if(S.min>=55&&!S.L.warned){S.L.warned=true;toast('The clock is ticking louder.')}
+  await onEnter(to);
+}
+async function onEnter(to){
+  if(to==='studio'&&allPlaced())return finale();
+  if(!S.L.ambush&&S.min>=48)return ambush();
+  if(!S.P.seen[to]&&ROOM_INTRO[to]){S.P.seen[to]=true;await say('',ROOM_INTRO[to])}
+  if(to==='kitchen'&&S.loop>=2&&!S.L.phone&&!S.L.ringing){S.L.ringing=true;ui();await say('','The phone on the wall is ringing.')}
+}
+async function die(id){
+  S.cam=false;S.P.lastDeath=id;S.P.deaths++;META.deaths[id]=true;saveMeta();Snd.stopMusic();Snd.sting();
+  const n=DEATH_ORDER.filter(k=>META.deaths[k]).length;
+  await card({kind:'death',sub:'YOU DIED · NIGHT '+S.loop,title:DEATHS[id].t,lines:[DEATHS[id].x],foot:`DEATHS FOUND ${n}/${DEATH_ORDER.length}`,btn:'Rewind to 3:33'});
+  S.loop++;resetLoop();await loopIntro();throw new Abort();
+}
+async function ending(id){
+  const E=ENDINGS[id];META.endings[id]=true;saveMeta();save();Snd.stopMusic();if(id==='dawn'){Snd.music('dream');Snd.chime()}
+  const n=END_ORDER.filter(k=>META.endings[k]).length;
+  await card({kind:E.cls,sub:E.k,title:E.t,lines:E.lines,gill:E.g,foot:`ENDINGS FOUND ${n}/${END_ORDER.length}`,btn:'Return to the title'});
+  toTitle();throw new Abort();
+}
+async function loopIntro(){
+  await card({kind:'night',sub:'3:33 A.M.',title:'NIGHT '+S.loop,lines:['The clock rewinds. The paint is wet again.'],btn:'Wake up'});
+  S.view='bedroom';ui();
+  const d=S.P.lastDeath;S.P.lastDeath=null;
+  await say('gill',d?DEATHS[d].g:`night ${S.loop}. welcome back. i remember everything. you only remember the good bits. lucky.`);
+  if(S.loop===2&&!S.P.seen.loopTut){S.P.seen.loopTut=true;await say('gill',"oh, and yes. it's the same night again. you keep what you found: colours, memories, the red stuff. everything else resets.");await say('','Your journal (J) keeps red truths, memories and the ways you have died.',{cls:'tut'})}
+  save();
+}
+async function truth(id){
+  S.P.truth[id]=true;save();Snd.truth();flash('rgba(255,0,20,.35)');S.shake=6;
+  await say('',`{r}${TRUTH[id]}{/r}`,{cls:'truth'});
+}
+async function gainPigment(k){
+  S.P.pig[k]=true;save();ui();Snd.chime();toast(PIG[k].name+' obtained');
+  const m=MEM[PIG[k].mem];S.P.mem[PIG[k].mem]=true;
+  await say('',m.text,{cls:'mem',name:'MEMORY · '+m.title.toUpperCase()});
+}
+
+// ================= room actions =================
+async function letter(){
+  S.P.seen.letterTaken=true;
+  await say('',"My love,\nIf you're reading this, it's 3:33 again.\nI'm in the studio, finishing us. Come and find me.\nThe radio says not to look outside. Please don't.\nBe still, my heart.\n— W.",{cls:'letter'});
+}
+async function actWindow(){
+  if(S.cam){
+    await say('','Through the viewfinder, the curtains part a crack. Outside there is no city.');
+    await say('','Only white. Primed canvas, edge to edge, and a few pencil lines where a skyline was going to go.');
+    await truth('R4');return;
+  }
+  await say('','The curtains are drawn. The radio says not to look outside. Wren’s letter says not to look outside.');
+  const c=await choose(['Look outside anyway','Leave the curtains alone']);if(c)return;
+  await say('','You pull the curtain back with your own two hands and look.');
+  jump('white');await sleep(500);await say('','It looks back.');await die('sightseer');
+}
+async function actBed(){
+  if(S.P.dreams>=3)return say('',"You can't sleep. Not now. Someone is waiting in the studio.");
+  if(S.L.dreamt)return say('','You have already dreamt tonight. The pillow beside yours is cold and has a dent in it.');
+  if(S.min>=52)return say('','Too late to sleep. Something is climbing the hallway, one careful step at a time.');
+  await say('',S.P.dreams?'The bed is warm on one side. Wren’s side.':'The bed is warm on one side. Wren’s side. It smells like turpentine and them.');
+  const c=await choose(['Lie down and sleep (+6 minutes)','Not now']);if(c)return;
+  S.L.dreamt=true;await dream(S.P.dreams+1);
+}
+async function actUnder(){
+  await say('','Under the bed, in the green dark, someone is lying perfectly still.');
+  await say('','It’s you. Painted. Unfinished. It has the decency to keep its eyes closed.');
+  Snd.sting();S.shake=8;await say('','It opens them.');
+}
+async function actWardrobe(){
+  await say('','Wren’s clothes and yours, hung together. Wren’s sleeves are paint-stained to the elbow. Yours haven’t been worn in a while.');
+  const c=await choose(['Hide inside for a moment','Close it']);if(c)return;
+  await spend(1);await say('','It’s cosy. It smells like them. Nothing happens. It is the nicest thing that has happened all night.');
+}
+async function actGill(){
+  const opts=['Talk to Gill',S.L.food>0?`Feed Gill (${S.L.food} pinch${S.L.food>1?'es':''} left)`:{t:'Feed Gill (you have no fish food)',dis:true},'Leave'];
+  const c=await choose(opts);
+  if(c===0)return talkGill();if(c===1)return feedGill();
+}
+async function talkGill(){
+  const n=S.P.gillTalk++;
+  if(n===0){
+    await say('gill',"oh. you're up.");
+    await say('gill',"it's your first night, huh. i can tell. you've got that 'first time' face. i'm gill.");
+    await say('gill',"i remember everything. every 3:33. every time you die. it's a nightmare. i'm a fish.");
+    await say('gill',"anyway. wren's in the studio. probably. the studio's locked. definitely. i'm not sitting on anything.");
+    return;
+  }
+  if(S.L.food>0&&!S.P.studioOpen)return say('gill','is that food. is that FOOD. give. i will trade. i have... things.');
+  await say('gill',GILL_LINES[(n-1)%GILL_LINES.length]);
+}
+async function feedGill(){
+  S.L.food--;S.L.fed++;ui();const f=S.L.fed;Snd.tone(900,.08,{g:.05});
+  if(f===1){
+    if(!S.P.studioOpen){
+      await say('gill','nom. nom. ...okay. fine. a deal is a deal.');
+      await say('','Gill swims into the little castle and spits a tiny brass key out of the window. Ptoo.');
+      await say('gill',"studio key. i've been sitting on it for nine nights. you're welcome.");
+      S.P.studioOpen=true;save();ui();toast('Studio key. The studio door will open now.');
+    }else await say('gill','nom. thank you. i will remember this. i remember everything.');
+  }else if(f===2){
+    if(!S.P.pig.ultra){
+      await say('gill',"ugh. fine. you've earned it.");
+      await say('','Gill noses a mouthful of gravel up against the glass. It isn’t gravel. It’s ground lapis lazuli.');
+      await say('gill',"ultramarine. wren ground real lapis for my tank because wren is insane. take some. i'm rich.");
+      await gainPigment('ultra');
+    }else await say('gill','gill is getting... round. gill is not complaining.');
+  }else{
+    await say('','Gill is noticeably larger than a fish should be. There is a new and terrible ambition in Gill’s eyes.');
+    const c=await choose(['Feed Gill again','Absolutely not']);
+    if(c===1){S.L.food++;S.L.fed--;ui();return say('gill','coward.')}
+    Snd.sting();S.shake=12;await say('gill','oh. OH. oh, that is the good stuff.');await ending('gill');
+  }
+}
+async function actPaintings(){
+  if(!S.cam){
+    await say('','Portraits, all in Wren’s hand. All the same pose. Every single one of them is missing a face.');
+    if(S.L.turns>=2)await say('','One of them seems to have eyes now. It didn’t before.');
+    return;
+  }
+  await say('','In the green dark you can read the little brass name tags under the frames.');
+  await say('',`They all say {n}. ${S.loop===1?'Only one of them has a tag so far.':`${Math.min(S.loop,5)} of them have tags now.`}`);
+  if(S.loop>1)await say('','There were fewer last night.');
+}
+async function actWriting(){await say('','Scratched deep into the wallpaper, where you can only see it in the green: SHE STOPS AT NO.')}
+async function actCamcorder(){
+  S.P.hasCam=true;save();ui();Snd.tone(1200,.06,{type:'square',g:.04});
+  await say('','Wren’s camcorder. A sticky note on the side: “for reference footage ♥”. The night-vision switch is already on.');
+  await say('','Press C or the CAM button (top right) to look through it. Some things only show up on camera. It eats batteries.',{cls:'tut'});
+}
+async function studioDoor(){
+  if(!S.P.studioOpen){Snd.tone(180,.12,{type:'square',g:.08});await say('','Locked. Someone has put a tiny fish sticker over the keyhole.');return}
+  await go('studio');
+}
+async function turnAround(){
+  S.L.turns++;Snd.noise(.4,{type:'bandpass',f:600,to:200,q:2,g:.12});S.trans={t0:performance.now()};await sleep(300);
+  S.L.facing=S.L.facing==='A'?'B':'A';ui();await sleep(250);
+  if(S.L.turns===2)await say('','The portraits have changed. You are sure of it. They are closer than they were.');
+  if(S.L.turns===4){
+    S.stillIn=true;jump('still');await sleep(300);
+    await say('still','Peekaboo, darling. Don’t move.');
+    const ok=await scream({time:5});S.stillIn=false;
+    if(!ok)await die('lookback');
+    await say('','She comes apart like wet paint hitting a fan. The hallway is very quiet afterwards. It doesn’t want to be looked at again.');
+  }
+}
+async function actFront(){
+  if(!S.P.truth.R4){await say('','Six locks. Three chains. A note in Wren’s handwriting: NOT AT 3:33. NOTHING LEAVES AT 3:33.');await say('','The peephole has been painted over from the outside.');return}
+  await say('','You know what is out there now. Nothing. Primed canvas, waiting for someone to happen to it.');
+  const c=await choose(['Open the door and walk into the white','Not yet. Not without them.']);if(c)return;
+  await say('','The locks open one by one, like they were only ever waiting for you to ask.');
+  await ending('unpainted');
+}
+async function actMirror(){
+  if(!S.cam){await say('','Your reflection is half a second late. It’s very polite about it.');if(!S.P.mirHint){S.P.mirHint=true;await say('','In this light you can barely make yourself out. Maybe through a lens.')}return}
+  await say('','Through the viewfinder, the reflection’s chest doesn’t rise. You watch it for a long time.');
+  await say('','Neither does yours.');await truth('R2');
+}
+async function actTub(){
+  if(S.P.pig.crimson)return say('','Still red. Still warm. You don’t want to know whose.');
+  await say('','The tub is full to the brim. The water is red, warm and perfectly still. Something glints at the bottom.');
+  const c=await choose(['Reach in','Leave it']);if(c)return;
+  await say('','You push your arm in up to the elbow. It is the temperature of a mouth.');
+  S.handGrab=true;jump('still');await sleep(300);
+  await say('still','Ah-ah. Hold still, darling.');
+  if(!S.P.tut){
+    S.P.tut=true;await say('','Something has your wrist. It wants you to be still.');
+    await say('','SCREAM “NOOOO” into your microphone: loud and long, like the O never ends. No mic? Mash N.',{cls:'tut'});
+    if(!Mic.on&&!AUTO){const m=await choose(['Use my microphone','No mic. I’ll mash N.']);if(m===0)await Mic.enable()}
+  }
+  const ok=await scream({time:S.P.deaths?8:10});S.handGrab=false;
+  if(!ok)await die('bath');
+  await say('','You tear free. In your fist is a tube of paint, warm as a heartbeat.');
+  await gainPigment('crimson');
+}
+async function actCabinet(){
+  if(S.L.batt)return say('','Empty now. Just two toothbrushes. One of them is dry as paper.');
+  S.L.batt=true;S.batt=Math.min(100,S.batt+40);ui();
+  await say('','Batteries. Wren bought a forty-pack “for reference footage”. Camcorder charge +40%.');
+}
+async function actFreezer(){
+  if(S.P.freezer)return say('','Absolutely not. You remember what keeps in there.');
+  await say('','The freezer hums like it is trying to remember a song.');
+  const c=await choose(['Open the freezer','Leave it']);if(c)return;
+  S.P.freezer=true;jump('ice');await sleep(400);await say('','There is a face in the ice. It is yours. It opens its eyes.');await die('freezer');
+}
+async function actFridge(){await say('','Leftovers in neat tubs, labelled in Wren’s handwriting: YOURS. YOURS. YOURS. All of them nine days old.')}
+async function actCupboard(){
+  if(S.L.foodTaken)return say('','Mugs. Plates. A box of tea bags Wren hid from you “for your own good”.');
+  S.L.foodTaken=true;S.L.food=3;ui();
+  await say('','A tin of fish food. On the lid, in Wren’s handwriting: GILL’S. NOT FOR HUMANS (AGAIN). Three pinches left.');
+}
+async function actSpice(){
+  if(S.P.pig.ochre)return say('','The jar Wren called “too old to use” lies on its side, empty and smug.');
+  await say('','Turmeric. Paprika. One jar Wren always called “too old to use”. The lid won’t budge. It’s waiting for something.');
+}
+async function actMugs(){await say('','Two mugs. One is still warm, with a red thumbprint on the rim. The other has a skin of dust nine days thick. You know which one is yours.')}
+async function actRadio(){
+  if(!S.L.radio){
+    S.L.radio=true;Snd.noise(1.2,{type:'bandpass',f:1500,q:.5,g:.14});
+    await say('radio','...this is the 3:33 broadcast. Residents are reminded: do not look outside.');
+    await say('radio','Do not look outside. Do not open the door. Stay still. Stay still. Stay—');
+    if(!S.P.truth.R1)await truth('R1');else await say('radio','{r}THERE IS EXACTLY ONE LIVING PERSON IN FLAT 7B.{/r} ...Stay still.');
+  }else await say('radio','Stay still. Stay still. Stay still.');
+  if(S.P.know88){const c=await choose(['Tune it to 88.8, your station','Switch it off']);if(c===0)await dance()}
+  else await say('','The dial is stuck between stations. Your hand remembers a number but not which one.');
+}
+async function dance(){
+  S.radioOn=true;Snd.music('radio');
+  await say('','88.8. Something slow. A cello, a crackle, a voice humming without words.');
+  await say('','Behind you, a chair scrapes back from the table. Nobody is sitting in it.');
+  const c=await choose(['Dance','Switch it off']);
+  if(c===0){
+    await say('','You dance in your socks on the cold tiles. Twice you feel someone step on your feet.');
+    await say('','Twice someone whispers {i}sorry{/i} right against your ear.');
+    await spend(2);
+    if(!S.P.pig.ochre){await say('','When the song ends, the jar Wren always called “too old to use” has tipped over. It isn’t turmeric inside.');await gainPigment('ochre')}
+    else await say('','The song ends. The chair slides back in, politely.');
+  }
+  Snd.stopMusic();S.radioOn=false;ui();
+}
+function phoneHint(){
+  const P=S.P;
+  if(!P.pig.crimson)return"...is this working? it's me. you. last night's you. the bathtub. reach in. when she grabs you, scream no like you mean it.";
+  if(!P.studioOpen)return"gill is sitting on the studio key. gill is a little gremlin. the fish food's in the kitchen cupboard.";
+  if(!P.hasCam)return"wren's camcorder is on the little table in the hall. it sees things eyes don't.";
+  if(!P.pig.ultra)return"feed the fish twice. twice. not three times. unless you want to see something incredibly stupid.";
+  if(!P.know88)return"go to sleep. i mean it. wren's in the dream. wren remembers our station.";
+  if(!P.pig.ochre)return"88.8 on the radio. then dance. don't be weird about it. be a little weird about it.";
+  if(!P.pig.bone)return"sleep again. wren has a present for you. it's... a lot.";
+  if(!P.truth.R2)return"look in the bathroom mirror through the camera. count your breaths. go on.";
+  if(!P.truth.R4)return"look outside. but only through the camera. never with your own eyes.";
+  if(P.dreams<3)return"sleep one more time. wren needs to tell you something. it's not a nice something.";
+  return"put the colours on the palette. when she asks who's alive... think about who you never actually see in any room.";
+}
+async function actPhone(){
+  if(!S.L.ringing)return say('','Dial tone. If you listen long enough, it sounds like breathing.');
+  S.L.ringing=false;S.L.phone=true;ui();
+  await say('','You pick up. Static, and under the static a voice you know far too well.');
+  await say('phone',phoneHint());
+  await say('phone',"i have to go. it's 3:33 here too. it's always— *click*");
+}
+async function actEasel(){
+  if(!S.P.portraitSeen){
+    await say('','An easel under a sheet stiff with dried paint.');
+    const c=await choose(['Pull the sheet off','Leave it']);if(c)return;
+    S.P.portraitSeen=true;save();Snd.sting();
+    await say('','A portrait. One figure, painted with enormous, careful tenderness.');
+    await say('','Everything is finished except the face.');
+    await say('','In the corner, in Wren’s handwriting: {n}. And under it, smaller: {i}from memory{/i}.');
+    return;
+  }
+  const n=PIG_ORDER.filter(k=>S.P.placed[k]).length;
+  await say('',n?`The face is still blank. The palette holds ${n} of the 4 colours.`:'The face is still blank. Four colours short of being you.');
+}
+async function actPalette(){
+  const held=PIG_ORDER.filter(k=>S.P.pig[k]&&!S.P.placed[k]);
+  if(!held.length){
+    const miss=PIG_ORDER.filter(k=>!S.P.placed[k]).map(k=>PIG[k].name.toUpperCase());
+    return say('',miss.length===4?'A palette with four empty wells. Wren has labelled them in pencil: CRIMSON. ULTRAMARINE. OCHRE. BONE WHITE.':`Still empty, in pencil: ${miss.join(', ')}.`);
+  }
+  for(const k of held){S.P.placed[k]=true;ui();Snd.tone(300,.3,{g:.08,rev:true});await say('',`You squeeze ${PIG[k].name.toUpperCase()} into its well. It smells like a memory.`)}
+  save();
+  if(allPlaced())return finale();
+  const n=PIG_ORDER.filter(k=>S.P.placed[k]).length;
+  await say('',`${n} of 4. On the easel, the brush twitches.`);
+}
+async function actStacks(){
+  await say('','Canvases stacked ten deep. The same portrait, over and over. All signed {n}. All dated 3:33.');
+  await say('','On some of them the face has been scraped off with a palette knife. Hard.');
+}
+async function actStudioWindow(){await say('','Wren painted over the glass. Thick white gesso, coat after coat, so the studio never has to see outside.')}
+async function actBehind(){
+  await say('','Behind the easel, in the green, a tall shape in a gold frame is standing perfectly still, watching you through the canvas.');
+  Snd.sting();S.shake=8;await say('','You blink. It is closer.');
+}
+
+// ================= events =================
+async function ambush(){
+  S.L.ambush=true;S.cam=false;S.stillIn=true;ui();jump('still');await sleep(300);
+  const lines=['Hold that pose, darling.','Chin up. No, your soul is slouching.','Don’t move. You’re finally interesting.','There you are. Stay exactly like that.'];
+  await say('still',lines[S.loop%lines.length]);
+  const c=await choose([{t:'SCREAM “NOOOO”',cls:'scream'},S.room==='bedroom'?'Hide in the wardrobe':'Hide behind the door','Stand very, very still']);
+  if(c===1){await say('','You squeeze into the dark and hold your breath. Not that you need to.');S.stillIn=false;await say('still','Found you.');jump('still');await die('hide')}
+  if(c===2){await say('still','Good. Good. Oh, that’s lovely.');await die('statue')}
+  const ok=await scream({time:6});S.stillIn=false;
+  if(!ok)await die('housecall');
+  await say('','She comes apart like wet paint hitting a fan. For now.');
+}
+async function dream(n){
+  S.cam=false;ui();S.trans={t0:performance.now()};await sleep(400);
+  S.view='dream';S.dreamStage=n;S.dreamT0=S.t;S.wrenMood=null;S.wrenFrame=false;S.wrenBack=n===3;Snd.room('dream');Snd.music(n===3?'rot':'dream');
+  if(n===1){
+    await say('','You sink through the mattress like it is warm water. When you surface, everything is watercolour. Peach sky. Mint grass. A lake the colour of a bruise healing.');
+    await say('wren','Hey, you. You found the dream again. Or it found you.');
+    let c=await choose(['“Wren? Are you real?”','“You look like a painting.”','“Where have you been?”']);
+    await say('wren',['Real enough to steal your sandwich. Which I did. Sorry.','Everything here is a painting, love. I just happen to be a flattering one.','In the studio. Always in the studio. You know me.'][c]);
+    S.wrenMood='open';
+    await say('wren','Listen. When you wake up, she’ll come for you. Tall. Dripping. Wears a frame like a hat.',{mood:'open'});
+    await say('wren','Don’t hide from her and don’t stand still. She only understands one word.',{mood:'open'});
+    await say('wren','{i}No.{/i} Scream it. Long and ugly, like you sing in the shower.',{mood:'open'});
+    S.wrenMood=null;
+    c=await choose(['Hold their hand','Kiss them','Steal the sandwich back']);
+    if(c===0)await say('','Their fingers are cold and smudged with blue. They squeeze yours three times. {i}I. Love. You.{/i} They always cheated and did a fourth.');
+    else if(c===1)await say('','They taste like coffee and linseed oil. When you pull back there is a smear of their colour on your mouth.');
+    else await say('wren','Thief! Criminal! ...Marry me. Kidding. Unless.');
+    await say('wren','Oh, and if the radio gets lonely, try 88.8. Our station. The one that only plays slow songs after three.');
+    S.P.know88=true;toast('You remember: 88.8');
+    await say('wren','Wake up now, love. Before she notices you’re gone.');
+  }else if(n===2){
+    await say('','The watercolour again. Wren has set up an easel on the picnic blanket and is painting you.');
+    await say('wren','Hold still. ...Not that still. You’re doing the dead-fish face. Gill’s face.');
+    await say('wren','Can I ask you something awful?',{mood:'open'});
+    await say('wren','If I could keep you, really keep you, forever, exactly like this... would you let me?',{mood:'open'});
+    const c=await choose(['“Yes.”','“No.”','“Depends on the snacks.”']);
+    await say('wren',['...Don’t say that so fast. It makes it worse.','Good. Hold on to that word. You’ll need it more than I do.','Unlimited crisps. Eternal crisps. ...You’d still say no. That’s why I love you.'][c],{mood:c===0?'sad':'happy'});
+    await say('','At the far edge of the dream, where the paper isn’t painted yet, something black has been scribbled in. It doesn’t move. It doesn’t need to.');
+    await say('wren','Don’t look at that. That’s just how I feel when you’re not here.',{mood:'sad'});
+    await say('wren','Here. A present. Bone white. I ground it myself.');
+    await say('wren','...Don’t ask from what.',{mood:'open'});
+    const d=await choose(['“From what?”','Don’t ask']);
+    if(d===0){await say('wren','From the bits of you they gave back to me. In a little box. With a ribbon on it, like a present.',{mood:'sad'});await say('','They say it like a joke. It isn’t one.')}
+    else await say('wren','Thank you. You were always kinder than the truth.');
+    await gainPigment('bone');
+    await say('wren','Go on. Wake up. The face still needs finishing.');
+  }else{
+    await say('','The watercolour is running. The sky drips into the lake. The lake drips into nothing.');
+    await say('','Wren sits with their back to you, very still.');
+    await say('wren','I’m sorry, love. I’ve been lying to you. Not with words. With paint.');
+    await truth('R3');
+    await say('wren','Every night I tell myself: one more. One more 3:33. One more walk through the flat. One more time you come and find me.');
+    await say('','Wren turns around.');
+    S.wrenBack=false;S.wrenFrame=true;jump('still');await sleep(300);
+    await say('still','DON’T LOOK AT ME LIKE THAT.',{name:'WREN?'});
+    await say('wren','...Go and finish the painting. And when she asks you to stay...',{frame:true});
+    await say('wren','I hope you’re braver than I am.',{frame:true});
+  }
+  S.P.dreams=Math.max(S.P.dreams,n);save();Snd.stopMusic();
+  S.trans={t0:performance.now()};await sleep(400);S.view=S.room;S.wrenFrame=false;S.wrenBack=false;S.min+=6;Snd.room(S.room);ui();
+  await say('',`You wake up. 3:${pad(S.min)}. The pillow is wet with something that isn’t tears.`);
+}
+async function finale(){
+  S.cam=false;ui();Snd.stopMusic();
+  await say('','The palette is full. On the easel, the brush lifts by itself.');
+  S.P.portraitSeen=true;S.portraitFinal=true;S.paintAnim=S.t;
+  await say('','Crimson for the mouth. Ultramarine for the eyes. Ochre for the skin. Bone white for the light in them.');
+  await say('','The face on the canvas is yours. Of course it is. It always was.');
+  S.stillIn=true;S.stillCols=PIG_ORDER.map(k=>PIG[k].col);jump('still');await sleep(300);
+  await say('still','There you are, darling. Finished at last.');
+  await say('still','Look at you. Perfect. Don’t you dare move.');
+  await say('still','{b}You are the living one here, and living things leave. So stay with me inside the painting, and you will never have to leave again.{/b}');
+  if(!S.P.blueTut){S.P.blueTut=true;await say('','Blue words are only theories. Red words are always true. You can answer her in red.',{cls:'tut'})}
+  for(;;){
+    const truths=Object.keys(TRUTH).filter(k=>S.P.truth[k]);
+    const c=await choose(['“Yes. I’ll stay.”',truths.length?'Answer her in red':{t:'Answer her in red (you know no red truths)',dis:true},{t:'SCREAM “NOOOO”',cls:'scream'}]);
+    if(c===0){await say('still','Good. Good. Now be still.');await ending('still')}
+    if(c===2){const ok=await scream({time:7});if(ok)await ending('turp');await say('still','Shh. There. Isn’t that better?');await ending('still')}
+    const t=await choose(truths.map(k=>({t:TRUTH[k],cls:'red'})));const k=truths[t];
+    await say('you',`{r}${TRUTH[k]}{/r}`);
+    if(k!=='R2'){
+      await say('still',{R1:'Exactly one living person. And you’re the one walking around, aren’t you? You’re making my point for me.',R3:'Wren never leaves. Wren is devoted. Wren is not the question, darling.',R4:'Nothing outside is painted. All the more reason to stay in here with me.'}[k]);
+      continue;
+    }
+    Snd.shatter();S.shake=14;S.stillCrack=true;
+    await say('still','No. No, no, no. You’re twisting it—');
+    await say('still','If you don’t breathe, then you aren’t the living one. Then... then WHO is?');
+    const who=await choose(['Me','Gill','Wren','Madame Still','Nobody']);
+    if(who===2)return reveal();
+    if(who===1)await say('gill','(muffled, from the bedroom) flattered. wrong, though. i’m a fish. not a person. read the red.');
+    else await say('still',['You just told me you don’t breathe, darling. Do keep up.','','',"Me? I'm paint, darling. I'm an opinion wearing a frame.",'Nobody? Then who has been painting you every night?'][who]);
+    S.stillCrack=false;await say('still','Let’s pretend you didn’t say that. Again: stay with me.');
+  }
+}
+async function reveal(){
+  S.stillCrack=false;Snd.chime();
+  await say('','The frame slips off her head and hits the floor. Under the black paint is a tired face, smeared to the eyebrows in every colour you just used.');
+  S.stillIn=false;S.wrenHere=true;Snd.music('dream');
+  const sad={mood:'sad'};
+  await say('wren','Hi, love.',sad);
+  await say('wren','Nine nights. Every night at 3:33 I paint you, and you get up, and you walk around our flat, and you come and find me.',sad);
+  await say('wren','And every night I ask you to stay. And you stay, or you die, or you leave, and I start again.',sad);
+  await say('wren','You slipped in the bath. I was in here with my headphones on, painting you. I didn’t hear a thing.',sad);
+  await say('wren','I can’t put the brush down. I don’t know how.',sad);
+  await say('wren','So say it for me. Tell me no. I can’t say it to myself.',sad);
+  for(let i=0;i<3;i++){
+    const ok=await scream({time:12,threat:false,title:'SCREAM “NOOOO”',sub:'Let them go.'});
+    if(ok)await ending('dawn');
+    await say('wren',i<2?'Louder, love. I need to actually hear it.':'...It’s okay. I know. Me neither.',sad);
+  }
+  await ending('still');
+}
+async function intro(){
+  S.view='black';Snd.room('title');
+  await say('','Flat 7B. Third floor. In this building the radio has said the same thing for nine nights.');
+  await say('','{i}Do not look outside.{/i}');
+  await say('','{i}Stay still.{/i}');
+  S.trans={t0:performance.now()};await sleep(380);S.view='bedroom';Snd.room('bedroom');
+  await say('','You wake up. It is 3:33 A.M. It is always 3:33 A.M.');
+  await say('','Wren’s side of the bed is cold. There’s a letter on the nightstand.');
+  await letter();
+  await say('','Click things to look at them. The buttons at the edges take you between rooms. Every move costs a minute, and nothing good happens at 4:00.',{cls:'tut'});
+}
+
+// ================= title, panels, input =================
+function toTitle(){
+  S.mode='title';S.view='title';S.cam=false;endDialog();Snd.stopMusic();Snd.room('title');
+  $('#title').classList.remove('hide');$('#tcont').classList.toggle('hide',!store.get('bestill.save',null));
+  const sv=store.get('bestill.save',null);if(sv)$('#tcont').textContent=`Continue: night ${sv.loop}`;ui();
+}
+$('#tnew').onclick=()=>{Snd.init();Snd.click();$('#title').classList.add('hide');$('#namebox').classList.remove('hide');$('#nameinp').value='';setTimeout(()=>$('#nameinp').focus(),50)};
+function signName(){
+  const v=$('#nameinp').value.replace(/[{}<>]/g,'').trim().slice(0,14);S.name=v||'Love';
+  $('#namebox').classList.add('hide');S.P=freshP();S.loop=1;S.mode='play';resetLoop();S.view='black';
+  run(intro);
+}
+$('#nameok').onclick=signName;
+$('#tcont').onclick=()=>{
+  Snd.init();Snd.click();const sv=store.get('bestill.save',null);if(!sv)return;
+  S.name=sv.name||'Love';S.loop=sv.loop||1;S.P=Object.assign(freshP(),sv.P||{});
+  $('#title').classList.add('hide');S.mode='play';resetLoop();run(loopIntro);
+};
+$('#tmic').onclick=()=>{Snd.init();$('#micpanel').classList.remove('hide');$('#msens').value=Mic.sens;$('#mvolume').value=Snd.vol};
+$('#mclose').onclick=()=>$('#micpanel').classList.add('hide');
+$('#menable').onclick=async()=>{$('#mstatus').textContent='Asking for permission…';await Mic.enable();$('#mstatus').textContent=Mic.on?'Microphone is on.':'Microphone unavailable. You can still play with the keyboard.'};
+$('#msens').onchange=e=>{Mic.sens=+e.target.value;store.set('bestill.sens',Mic.sens)};
+$('#mvolume').oninput=e=>Snd.setVol(+e.target.value);
+$('#mtest').onclick=async()=>{$('#micpanel').classList.add('hide');$('#title').classList.add('hide');const ok=await scream({time:10,threat:false,title:'MICROPHONE TEST',sub:'Make a long, loud sound. Fill the bar before the gold line runs out.',test:true});toast(ok?'Your microphone hears you.':'Not quite. Louder and longer, or raise the sensitivity.');$('#title').classList.remove('hide');$('#micpanel').classList.remove('hide')};
+function micPanelUpdate(){
+  if(!Mic.on||S.qte)return;Mic.sample();
+  $('#mvol').style.width=clamp((Mic.db+75)/70,0,1)*100+'%';$('#mthr').style.left=clamp((Mic.thr+75)/70,0,1)*100+'%';$('#moo').style.width=(Mic.oo||0)*100+'%';
+  const m=$('#mgood');m.textContent=Mic.good?'SCREAM DETECTED ✓':Mic.db<Mic.thr?'Scream past the white line.':'Try a deeper, rounder sound.';m.className=Mic.good?'good':'';
+}
+let jTab='truths';
+function renderJournal(){
+  const tabs=[['truths','Red truths'],['mem','Memories'],['deaths','Deaths'],['endings','Endings']];
+  const jt=$('#jtabs');jt.textContent='';tabs.forEach(([k,l])=>{const b=document.createElement('button');b.textContent=l;b.className=jTab===k?'on':'';b.onclick=()=>{jTab=k;renderJournal()};jt.appendChild(b)});
+  const jb=$('#jbody');jb.textContent='';const item=(title,text,cls)=>{const d=document.createElement('div');d.className='jitem'+(cls?' '+cls:'');if(title){const b=document.createElement('b');b.textContent=title;d.appendChild(b);d.appendChild(document.createElement('br'))}const s=document.createElement('span');s.textContent=text;if(cls==='red')s.className='tr';d.appendChild(s);jb.appendChild(d)};
+  const P=S.P;
+  if(jTab==='truths'){const ks=Object.keys(TRUTH).filter(k=>P.truth[k]);if(!ks.length)item('','No red truths yet. Red words are always true.');ks.forEach(k=>item('',TRUTH[k],'red'))}
+  if(jTab==='mem'){const ks=Object.keys(MEM).filter(k=>P.mem[k]);if(!ks.length)item('','Nothing yet. Each colour you find brings one back.');ks.forEach(k=>item(MEM[k].title,MEM[k].text))}
+  if(jTab==='deaths')DEATH_ORDER.forEach(k=>META.deaths[k]?item(DEATHS[k].t,DEATHS[k].x):item('???','A death you have not found yet.','lock'));
+  if(jTab==='endings')END_ORDER.forEach(k=>META.endings[k]?item(ENDINGS[k].t+' · '+ENDINGS[k].k,ENDINGS[k].lines[0]):item('???','An ending you have not reached yet.','lock'));
+}
+function toggleJournal(force){const j=$('#journal'),open=force??j.classList.contains('hide');j.classList.toggle('hide',!open);if(open)renderJournal()}
+$('#bjour').onclick=()=>toggleJournal();$('#jclose').onclick=()=>toggleJournal(false);
+$('#tgal').onclick=()=>{Snd.init();jTab='deaths';toggleJournal(true)};
+function toggleCam(){if(!S.P.hasCam||S.busy||S.mode!=='play'||S.view!==S.room)return;if(!S.cam&&S.batt<=0){toast('No charge left. Find batteries.');return}S.cam=!S.cam;Snd.tone(S.cam?1300:700,.07,{type:'square',g:.04});ui()}
+$('#bcam').onclick=toggleCam;
+function toggleMute(){Snd.setMute(!Snd.muted);$('#bmute').textContent=Snd.muted?'✕':'♪';toast(Snd.muted?'Sound off':'Sound on')}
+$('#bmute').onclick=toggleMute;if(MUTE)$('#bmute').textContent='✕';
+addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();Snd.resume();
+  if(!$('#namebox').classList.contains('hide')){if(k==='enter')signName();return}
+  if(S.qte){if((k==='n'||k==='o')&&!e.repeat){mashNo();e.preventDefault()}return}
+  if(!$('#journal').classList.contains('hide')){if(k==='escape'||k==='j')toggleJournal(false);return}
+  if(C&&/^[1-9]$/.test(k)){C.pick(+k-1);return}
+  if(D&&(k===' '||k==='enter')){e.preventDefault();D.adv();return}
+  const cardB=$('#card.on button');if(cardB&&(k===' '||k==='enter')){e.preventDefault();cardB.click();return}
+  if(S.mode!=='play')return;
+  if(k==='j')toggleJournal();else if(k==='c')toggleCam();else if(k==='m')toggleMute();
+  else if(!S.busy&&S.view===S.room){const dir={arrowleft:'left',arrowright:'right',arrowup:'up',arrowdown:'down',t:'turn'}[k];if(dir){const ex=ROOMS[S.room].exits().find(x=>x.dir===dir);if(ex){e.preventDefault();run(ex.act)}}}
+});
+addEventListener('pointerdown',()=>Snd.resume());
+function fit(){const s=Math.min(innerWidth/W,innerHeight/H);$('#game').style.transform=`scale(${s})`}
+addEventListener('resize',fit);fit();
+
+// ================= test hooks =================
+const BS=window.BS={S,Mic,Snd,META:()=>META,queue:[],failQte:false,
+  spot(id){const sp=ROOMS[S.room].spots().find(s=>s.id===id);if(!sp)throw new Error('no spot '+id+' in '+S.room);return run(sp.act)},
+  exit(dir){const ex=ROOMS[S.room].exits().find(e=>e.dir===dir);if(!ex)throw new Error('no exit '+dir);return run(ex.act)},
+  spots(){return ROOMS[S.room].spots().filter(s=>!s.cam||S.cam).map(s=>s.id)},
+  start(name='Tester'){$('#nameinp').value=name;$('#title').classList.add('hide');signName()},
+  cam(on){S.cam=on;ui()},ui,
+  info(){return{loop:S.loop,min:S.min,room:S.room,view:S.view,busy:S.busy,mode:S.mode,P:S.P,L:S.L}}
+};
+toTitle();requestAnimationFrame(frame);
+</script>
+</body>
+</html>
